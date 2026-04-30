@@ -1,66 +1,78 @@
 import { maps } from './maps.js';
 import { Game } from './game.js';
 import { getHighScore, saveHighScore } from './storage.js';
-import { showScreen, Screens } from './ui.js';
+import { 
+  Screens, Overlays, showScreen, showOverlay, hideOverlays, 
+  initMenuBackground, renderMapCards, renderMapDetail, 
+  updateHUD, updatePauseOverlay, updateGameOverOverlay 
+} from './ui.js';
 
 // DOM Elements
-const mapsListContainer = document.getElementById('maps-list');
-const btnStart = document.getElementById('btn-start');
+const btnMenuPlay = document.getElementById('btn-menu-play');
+const btnMenuMap = document.getElementById('btn-menu-map');
 const btnBackToMenu = document.getElementById('btn-back-to-menu');
+const btnPause = document.getElementById('btn-pause');
 const btnResume = document.getElementById('btn-resume');
+const btnRestartPaused = document.getElementById('btn-restart-paused');
 const btnQuitPaused = document.getElementById('btn-quit-paused');
 const btnPlayAgain = document.getElementById('btn-play-again');
+const btnChooseMap = document.getElementById('btn-choose-map');
 const btnQuitGameover = document.getElementById('btn-quit-gameover');
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
-const currentScoreEl = document.getElementById('current-score');
-const currentMapNameEl = document.getElementById('current-map-name');
-const finalScoreEl = document.getElementById('final-score');
 
 // Game State
 let game = null;
-let currentMapId = null;
+let currentMapId = 'meadow';
 let gameLoopId = null;
 let isPaused = false;
 let lastTime = 0;
 let timeAccumulator = 0;
+let stopMenuAnim = null;
 
-// Initialize App
 function init() {
-  renderMapSelection();
+  stopMenuAnim = initMenuBackground();
+  updateOverallBest();
   setupEventListeners();
   showScreen(Screens.MAIN_MENU);
 }
 
-function renderMapSelection() {
-  mapsListContainer.innerHTML = '';
-  Object.values(maps).forEach(map => {
-    const highScore = getHighScore(map.id);
-    const btn = document.createElement('button');
-    btn.className = 'map-btn';
-    btn.innerHTML = `
-      <span>${map.name} (${map.difficulty})</span>
-      <span>High: ${highScore}</span>
-    `;
-    btn.addEventListener('click', () => startGame(map.id));
-    mapsListContainer.appendChild(btn);
+function updateOverallBest() {
+  let max = 0;
+  Object.keys(maps).forEach(id => {
+    const hs = getHighScore(id);
+    if (hs > max) max = hs;
   });
+  document.getElementById('menu-overall-best').textContent = max + ' pts';
+}
+
+function handleSelectMap(mapId) {
+  currentMapId = mapId;
+  renderMapCards(maps, getHighScore, currentMapId, handleSelectMap);
+  renderMapDetail(maps[currentMapId], getHighScore, () => startGame(currentMapId));
 }
 
 function startGame(mapId) {
   currentMapId = mapId;
   const mapConfig = maps[mapId];
   
+  // Size the game canvas properly before starting
+  const GRID_SIZE = 20;
+  const CELL_SIZE = 26; // match prototype aesthetic
+  canvas.width = GRID_SIZE * CELL_SIZE;
+  canvas.height = GRID_SIZE * CELL_SIZE;
+  
   game = new Game(mapConfig, handleGameOver, handleScoreChange);
   
-  currentMapNameEl.textContent = mapConfig.name;
-  currentScoreEl.textContent = `Score: 0`;
+  const best = getHighScore(mapId);
+  updateHUD(0, best, mapConfig);
   
   isPaused = false;
   lastTime = performance.now();
   timeAccumulator = 0;
   
+  hideOverlays();
   showScreen(Screens.GAMEPLAY);
   
   if (gameLoopId) cancelAnimationFrame(gameLoopId);
@@ -69,14 +81,21 @@ function startGame(mapId) {
 
 function handleGameOver(score) {
   cancelAnimationFrame(gameLoopId);
+  
+  const mapConfig = maps[currentMapId];
+  const oldBest = getHighScore(currentMapId);
+  const isNewBest = score > oldBest;
+  
   saveHighScore(currentMapId, score);
-  finalScoreEl.textContent = `Score: ${score}`;
-  showScreen(Screens.GAME_OVER);
-  renderMapSelection(); // Update high scores in UI
+  
+  updateGameOverOverlay(score, Math.max(score, oldBest), mapConfig, isNewBest);
+  showOverlay(Overlays.GAME_OVER);
+  updateOverallBest();
 }
 
 function handleScoreChange(score) {
-  currentScoreEl.textContent = `Score: ${score}`;
+  const best = Math.max(score, getHighScore(currentMapId));
+  updateHUD(score, best, maps[currentMapId]);
 }
 
 function gameLoop(currentTime) {
@@ -106,29 +125,64 @@ function gameLoop(currentTime) {
 }
 
 function setupEventListeners() {
-  btnStart.addEventListener('click', () => showScreen(Screens.MAP_SELECTION));
-  btnBackToMenu.addEventListener('click', () => showScreen(Screens.MAIN_MENU));
+  btnMenuPlay.addEventListener('click', () => {
+    startGame(currentMapId);
+  });
+  
+  btnMenuMap.addEventListener('click', () => {
+    handleSelectMap(currentMapId); // pre-select and render
+    showScreen(Screens.MAP_SELECTION);
+  });
+  
+  btnBackToMenu.addEventListener('click', () => {
+    updateOverallBest();
+    showScreen(Screens.MAIN_MENU);
+  });
+  
+  btnPause.addEventListener('click', () => {
+    if (!game || game.isGameOver) return;
+    isPaused = true;
+    updatePauseOverlay(game.score, getHighScore(currentMapId));
+    showOverlay(Overlays.PAUSE);
+  });
   
   btnResume.addEventListener('click', () => {
     isPaused = false;
-    showScreen(Screens.GAMEPLAY);
+    hideOverlays();
   });
   
-  btnQuitPaused.addEventListener('click', () => showScreen(Screens.MAIN_MENU));
+  btnRestartPaused.addEventListener('click', () => startGame(currentMapId));
+  
+  btnQuitPaused.addEventListener('click', () => {
+    cancelAnimationFrame(gameLoopId);
+    updateOverallBest();
+    showScreen(Screens.MAIN_MENU);
+  });
   
   btnPlayAgain.addEventListener('click', () => startGame(currentMapId));
-  btnQuitGameover.addEventListener('click', () => showScreen(Screens.MAIN_MENU));
+  
+  btnChooseMap.addEventListener('click', () => {
+    cancelAnimationFrame(gameLoopId);
+    handleSelectMap(currentMapId);
+    showScreen(Screens.MAP_SELECTION);
+  });
+  
+  btnQuitGameover.addEventListener('click', () => {
+    updateOverallBest();
+    showScreen(Screens.MAIN_MENU);
+  });
 
   window.addEventListener('keydown', (e) => {
     if (!game || game.isGameOver) return;
 
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
       if (document.getElementById(Screens.GAMEPLAY).classList.contains('active')) {
         isPaused = !isPaused;
         if (isPaused) {
-          showScreen(Screens.PAUSE);
+          updatePauseOverlay(game.score, getHighScore(currentMapId));
+          showOverlay(Overlays.PAUSE);
         } else {
-          showScreen(Screens.GAMEPLAY);
+          hideOverlays();
         }
       }
       return;
@@ -161,5 +215,4 @@ function setupEventListeners() {
   });
 }
 
-// Start
 init();

@@ -1,0 +1,271 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,sans-serif;}
+
+.screen{width:100%;background:#0c1219;border-radius:20px;overflow:hidden;position:relative;}
+
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px 12px;border-bottom:1px solid rgba(255,255,255,.05);
+}
+.map-pill{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;padding:5px 12px 5px 8px;
+}
+.map-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;}
+.map-name{font-size:12px;font-weight:500;color:#9ca3af;}
+.hud{display:flex;align-items:center;gap:8px;}
+.score-block{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:6px 16px;text-align:center;min-width:80px;
+}
+.score-label{font-size:9px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#4b5563;margin-bottom:1px;}
+.score-val{font-size:20px;font-weight:700;color:#f9fafb;line-height:1.1;}
+.score-val.gold{color:#fbbf24;}
+.hud-sep{width:1px;height:28px;background:rgba(255,255,255,.07);}
+.pause-icon-btn{
+  width:36px;height:36px;border-radius:9px;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
+  display:flex;align-items:center;justify-content:center;
+}
+
+.board-area{position:relative;}
+canvas{display:block;width:100%;}
+
+.overlay{
+  position:absolute;inset:0;
+  background:rgba(8,12,20,0.78);
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(1px);
+}
+
+.pause-card{
+  background:#141e2b;
+  border:1.5px solid rgba(255,255,255,.1);
+  border-radius:20px;
+  padding:32px 32px 28px;
+  width:260px;
+  display:flex;flex-direction:column;align-items:center;
+  gap:0;
+}
+
+.pause-icon{
+  width:48px;height:48px;border-radius:14px;
+  background:rgba(74,222,128,.12);border:1.5px solid rgba(74,222,128,.25);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:16px;
+}
+
+.pause-title{
+  font-size:22px;font-weight:700;color:#f9fafb;
+  margin-bottom:4px;letter-spacing:-0.3px;
+}
+.pause-sub{
+  font-size:12px;color:#4b5563;margin-bottom:24px;text-align:center;
+}
+
+.stat-row{
+  display:flex;gap:8px;width:100%;margin-bottom:24px;
+}
+.stat-pill{
+  flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:8px 10px;text-align:center;
+}
+.stat-lbl{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#4b5563;margin-bottom:2px;}
+.stat-v{font-size:16px;font-weight:700;color:#f9fafb;}
+.stat-v.g{color:#fbbf24;}
+
+.btn-group{display:flex;flex-direction:column;gap:8px;width:100%;}
+
+.pbtn{
+  width:100%;height:46px;border-radius:12px;border:none;cursor:pointer;
+  font-size:14px;font-weight:600;letter-spacing:.01em;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:transform .12s,opacity .13s;
+}
+.pbtn:hover{opacity:.88;transform:translateY(-1px);}
+.pbtn:active{transform:scale(.97);}
+
+.pbtn-resume{background:#4ade80;color:#052e16;}
+.pbtn-restart{background:rgba(255,255,255,.07);color:#e5e7eb;border:1px solid rgba(255,255,255,.1);}
+.pbtn-menu{background:transparent;color:#6b7280;border:1px solid rgba(255,255,255,.07);height:40px;font-size:13px;}
+
+.divider{width:100%;height:1px;background:rgba(255,255,255,.06);margin:4px 0;}
+</style>
+
+<div class="screen">
+  <h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Snake Arena pause menu overlay showing Resume, Restart, and Back to Menu buttons over a frozen gameplay screen</h2>
+
+  <div class="topbar">
+    <div class="map-pill">
+      <div class="map-dot"></div>
+      <span class="map-name">Classic Grass Field</span>
+    </div>
+    <div class="hud">
+      <div class="score-block">
+        <div class="score-label">Score</div>
+        <div class="score-val">340</div>
+      </div>
+      <div class="hud-sep"></div>
+      <div class="score-block">
+        <div class="score-label">Best</div>
+        <div class="score-val gold">2,840</div>
+      </div>
+    </div>
+    <div class="pause-icon-btn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="2" y="1" width="4" height="12" rx="1.5" fill="#4ade80"/>
+        <rect x="8" y="1" width="4" height="12" rx="1.5" fill="#4ade80"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="board-area">
+    <canvas id="gc"></canvas>
+    <div class="overlay">
+      <div class="pause-card">
+
+        <div class="pause-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="2" width="6" height="18" rx="2" fill="#4ade80"/>
+            <rect x="13" y="2" width="6" height="18" rx="2" fill="#4ade80"/>
+          </svg>
+        </div>
+
+        <div class="pause-title">Paused</div>
+        <div class="pause-sub">Your progress is safe</div>
+
+        <div class="stat-row">
+          <div class="stat-pill">
+            <div class="stat-lbl">Score</div>
+            <div class="stat-v">340</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-lbl">Best</div>
+            <div class="stat-v g">2,840</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-lbl">Length</div>
+            <div class="stat-v">12</div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="pbtn pbtn-resume">
+            <svg width="14" height="14" viewBox="0 0 14 14">
+              <polygon points="2,1 13,7 2,13" fill="#052e16"/>
+            </svg>
+            Resume
+          </button>
+          <button class="pbtn pbtn-restart">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 7a5 5 0 1 0 1.5-3.5L2 2"/>
+              <path d="M2 2v3h3"/>
+            </svg>
+            Restart
+          </button>
+          <div class="divider"></div>
+          <button class="pbtn pbtn-menu">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round">
+              <path d="M8 2L3 6.5 8 11"/>
+            </svg>
+            Back to Menu
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+
+const COLS = 22, ROWS = 16, CELL = 26;
+canvas.width  = COLS * CELL;
+canvas.height = ROWS * CELL;
+
+const BG    = '#111f14';
+const CELL_A = '#132716';
+const CELL_B = '#162d19';
+const WALL_F = '#1e4024';
+const WALL_S = '#2d5a33';
+const S_HEAD = '#4ade80';
+const S_BODY = '#22c55e';
+const S_TAIL = '#16a34a';
+const FOOD_C = '#f87171';
+
+const snake = [
+  {x:12,y:8},{x:11,y:8},{x:10,y:8},{x:9,y:8},{x:8,y:8},
+  {x:8,y:9},{x:8,y:10},{x:9,y:10},{x:10,y:10},{x:11,y:10},
+  {x:11,y:9}
+];
+const food = {x:16, y:5};
+
+function rr(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.roundRect(x,y,w,h,r);
+}
+
+function draw(){
+  ctx.fillStyle = BG;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      ctx.fillStyle=(r+c)%2===0?CELL_A:CELL_B;
+      ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
+    }
+  }
+
+  for(let c=0;c<COLS;c++){
+    drawWall(c,0); drawWall(c,ROWS-1);
+  }
+  for(let r=1;r<ROWS-1;r++){
+    drawWall(0,r); drawWall(COLS-1,r);
+  }
+
+  ctx.fillStyle=FOOD_C;
+  ctx.globalAlpha=0.85;
+  ctx.beginPath();
+  ctx.arc(food.x*CELL+CELL/2,food.y*CELL+CELL/2,CELL/2-3,0,Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha=0.28;
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(food.x*CELL+CELL/2-3,food.y*CELL+CELL/2-3,3.5,0,Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha=1;
+
+  snake.forEach((seg,i)=>{
+    const isH=i===0, isT=i===snake.length-1;
+    ctx.fillStyle=isH?S_HEAD:isT?S_TAIL:S_BODY;
+    const pad=isH?1:isT?3:2, r2=isH?6:isT?3:4;
+    rr(seg.x*CELL+pad,seg.y*CELL+pad,CELL-pad*2,CELL-pad*2,r2);
+    ctx.fill();
+    if(isH){
+      [[9,8],[9,18]].forEach(([ex,ey])=>{
+        ctx.fillStyle='rgba(0,0,0,.5)';
+        ctx.beginPath();ctx.arc(seg.x*CELL+ex,seg.y*CELL+ey,2.8,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,.6)';
+        ctx.beginPath();ctx.arc(seg.x*CELL+ex-0.8,seg.y*CELL+ey-0.8,1,0,Math.PI*2);ctx.fill();
+      });
+    }
+  });
+}
+
+function drawWall(x,y){
+  ctx.fillStyle=WALL_F;
+  ctx.fillRect(x*CELL,y*CELL,CELL,CELL);
+  ctx.strokeStyle=WALL_S;
+  ctx.lineWidth=1;
+  ctx.strokeRect(x*CELL+.5,y*CELL+.5,CELL-1,CELL-1);
+  ctx.fillStyle='rgba(255,255,255,.025)';
+  ctx.fillRect(x*CELL+2,y*CELL+2,CELL-4,CELL/2-2);
+}
+
+draw();
+</script>

@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake — Asset Board</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap');
+
+  :root {
+    --bg:       #0d1117;
+    --surface:  #161b22;
+    --border:   #21262d;
+    --navy:     #1a1a2e;
+    --green:    #4ade80;
+    --green2:   #22c55e;
+    --gold:     #fbbf24;
+    --red:      #f87171;
+    --blue:     #38bdf8;
+    --purple:   #c084fc;
+    --muted:    #6e7681;
+    --text:     #e6edf3;
+    --text2:    #8b949e;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 40px 32px 60px;
+  }
+
+  /* ── Header ── */
+  .page-header {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+  }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: -0.5px;
+  }
+  .page-meta { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 48px; }
+  .section-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Asset Grid ── */
+  .asset-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  /* ── Asset Card ── */
+  .asset-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 140px;
+    position: relative;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+  .asset-card:hover {
+    border-color: rgba(74,222,128,0.4);
+    box-shadow: 0 0 20px rgba(74,222,128,0.08);
+  }
+  .asset-card:hover .copy-hint { opacity: 1; }
+
+  .copy-hint {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-size: 9px;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .asset-canvas {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .asset-canvas svg { overflow: visible; }
+
+  .asset-name {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text2);
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .asset-size {
+    font-size: 9px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* ── Color palette row ── */
+  .palette-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .swatch {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+  }
+  .swatch-dot {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .swatch-hex { font-size: 9px; color: var(--muted); letter-spacing: 0.5px; }
+
+  /* ── UI component previews ── */
+  .ui-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 180px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .ui-card:hover { border-color: rgba(74,222,128,0.4); }
+  .ui-name { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1f2937;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 12px;
+    color: var(--green);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Export bar ── */
+  .export-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .exp-btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .exp-btn:hover { border-color: var(--green); color: var(--green); }
+  .exp-btn.primary { background: var(--green); color: #0d1117; border-color: var(--green); font-weight: 500; }
+  .exp-btn.primary:hover { background: var(--green2); }
+
+  /* checkerboard bg for transparent assets */
+  .checker {
+    background-image:
+      linear-gradient(45deg, #1e2430 25%, transparent 25%),
+      linear-gradient(-45deg, #1e2430 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #1e2430 75%),
+      linear-gradient(-45deg, transparent 75%, #1e2430 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-title">🐍 Snake — Asset Board</div>
+  <div class="page-meta">v1.0 · 12 assets · SVG / PNG</div>
+</div>
+
+<!-- Color Palette -->
+<div class="section">
+  <div class="section-label">Color Palette</div>
+  <div class="palette-row" id="palette-row"></div>
+</div>
+
+<!-- Export -->
+<div class="export-bar">
+  <button class="exp-btn primary" onclick="exportAllSVG()">↓ Export All SVG</button>
+  <button class="exp-btn" onclick="exportAllPNG()">↓ Export All PNG</button>
+  <button class="exp-btn" onclick="copySVGSprite()">⎘ Copy SVG Sprite</button>
+</div>
+
+<!-- Game Sprites -->
+<div class="section">
+  <div class="section-label">Game Sprites — 64×64</div>
+  <div class="asset-grid" id="sprite-grid"></div>
+</div>
+
+<!-- Tiles -->
+<div class="section">
+  <div class="section-label">Tile Textures — 32×32</div>
+  <div class="asset-grid" id="tile-grid"></div>
+</div>
+
+<!-- UI Components -->
+<div class="section">
+  <div class="section-label">UI Components</div>
+  <div class="asset-grid" id="ui-grid"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════
+const PALETTE = [
+  { name:'Navy Base',    hex:'#1a1a2e' },
+  { name:'Deep Blue',   hex:'#16213e' },
+  { name:'Dark Blue',   hex:'#0f3460' },
+  { name:'Neon Green',  hex:'#4ade80' },
+  { name:'Green Mid',   hex:'#22c55e' },
+  { name:'Gold',        hex:'#fbbf24' },
+  { name:'Coral Red',   hex:'#f87171' },
+  { name:'Sky Blue',    hex:'#60a5fa' },
+  { name:'Cloud',       hex:'#f1f5f9' },
+  { name:'Slate',       hex:'#94a3b8' },
+];
+
+// ════════════════════════════════════════════
+//  SVG ASSET DEFINITIONS
+// ════════════════════════════════════════════
+const SPRITES = [
+  {
+    id: 'snake-head',
+    name: 'Snake Head',
+    size: '64×64',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+      <defs>
+        <radialGradient id="hg" cx="40%" cy="35%">
+          <stop offset="0%" stop-color="#86efac"/>
+          <stop offset="100%" stop-color="#16a34a"/>
+        </radialGradient>
+        <filter id="hglow">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- Body -->
+      <rect x="8" y="8" width="48" height="48" rx="14" fill="url(#hg)" filter="url(#hglow)"/>
+      <!-- Top shine -->
+      <rect x="14" y="11" width="24" height="6" rx="3" fill="rgba(255,255,255,0.28)"/>
+      <!-- Eyes -->
+      <circle cx="22" cy="26" r="7" fill="#0d1117"/>
+      <circle cx="42" cy="26" r="7" fill="#0d1117"/>
+      <circle cx="24" cy="24" r="3" fill="white"/>
+      <circle cx="44" cy="24" r="3" fill="white"/>
+      <circle cx="24.5" cy="24.5" r="1.5" fill="#0d1117"/>
+      <circle cx="44.5" cy="24.5" r="1.5" fill="#0d1117"/>
+      <!-- Nostrils -->
+      <ellipse cx="27" cy="36" rx="2.5" ry="1.5" fill="rgba(0,0,0,0.3)"/>
+      <ellipse cx="37" cy="36" rx="2.5" ry="1.5" fill="rgba(0,0,0,0.3)"/>
+      <!-- Tongue -->
+      <line x1="32" y1="48" x2="32" y2="58" stroke="#f87171" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="32" y1="57" x2="27" y2="62" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+      <line x1="32" y1="57" x2="37" y2="62" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    id: 'snake-body',
+    name: 'Snake Body',
+    size: '64×64',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+      <defs>
+        <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4ade80"/>
+          <stop offset="100%" stop-color="#15803d"/>
+        </linearGradient>
+      </defs>
+      <rect x="4" y="4" width="56" height="56" rx="12" fill="url(#bg2)"/>
+      <!-- Scale pattern -->
+      <ellipse cx="22" cy="20" rx="10" ry="6" fill="rgba(255,255,255,0.10)"/>
+      <ellipse cx="42" cy="20" rx="10" ry="6" fill="rgba(255,255,255,0.10)"/>
+      <ellipse cx="32" cy="36" rx="10" ry="6" fill="rgba(255,255,255,0.10)"/>
+      <ellipse cx="14" cy="48" rx="8" ry="5" fill="rgba(255,255,255,0.07)"/>
+      <ellipse cx="50" cy="48" rx="8" ry="5" fill="rgba(255,255,255,0.07)"/>
+      <!-- Center line -->
+      <line x1="4" y1="32" x2="60" y2="32" stroke="rgba(0,0,0,0.12)" stroke-width="1.5"/>
+      <!-- Shine -->
+      <rect x="10" y="7" width="18" height="5" rx="2.5" fill="rgba(255,255,255,0.22)"/>
+    </svg>`
+  },
+  {
+    id: 'snake-tail',
+    name: 'Snake Tail',
+    size: '64×64',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+      <defs>
+        <linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4ade80"/>
+          <stop offset="100%" stop-color="#15803d"/>
+        </linearGradient>
+      </defs>
+      <!-- Tapered tail shape -->
+      <path d="M8,8 Q8,4 14,4 L50,4 Q58,4 58,12 L58,52 Q58,60 50,60 L32,60 Q20,60 14,52 L8,20 Q6,14 8,8 Z" fill="url(#tg)"/>
+      <!-- Tip -->
+      <ellipse cx="28" cy="58" rx="6" ry="4" fill="#15803d"/>
+      <!-- Scale -->
+      <ellipse cx="28" cy="20" rx="9" ry="5" fill="rgba(255,255,255,0.10)"/>
+      <ellipse cx="42" cy="34" rx="8" ry="5" fill="rgba(255,255,255,0.08)"/>
+      <!-- Shine -->
+      <rect x="14" y="7" width="16" height="5" rx="2.5" fill="rgba(255,255,255,0.20)"/>
+    </svg>`
+  },
+  {
+    id: 'food-apple',
+    name: 'Food (Apple)',
+    size: '64×64',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+      <defs>
+        <radialGradient id="ag" cx="38%" cy="30%">
+          <stop offset="0%" stop-color="#fca5a5"/>
+          <stop offset="100%" stop-color="#dc2626"/>
+        </radialGradient>
+        <filter id="aglow">
+          <feGaussianBlur stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- Glow base -->
+      <circle cx="32" cy="36" r="22" fill="#f87171" opacity="0.2" filter="url(#aglow)"/>
+      <!-- Apple body -->
+      <path d="M14,30 Q12,14 24,12 Q28,11 32,14 Q36,11 40,12 Q52,14 50,30 Q50,50 40,56 Q36,58 32,56 Q28,58 24,56 Q14,50 14,30 Z" fill="url(#ag)"/>
+      <!-- Leaf -->
+      <path d="M32,12 Q36,4 44,6 Q40,12 32,12 Z" fill="#4ade80"/>
+      <!-- Stem -->
+      <line x1="32" y1="12" x2="34" y2="5" stroke="#92400e" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Shine -->
+      <ellipse cx="24" cy="24" rx="6" ry="4" fill="rgba(255,255,255,0.38)" transform="rotate(-20,24,24)"/>
+      <ellipse cx="20" cy="31" rx="3" ry="2" fill="rgba(255,255,255,0.18)" transform="rotate(-20,20,31)"/>
+    </svg>`
+  },
+  {
+    id: 'wall-block',
+    name: 'Wall Block',
+    size: '64×64',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+      <defs>
+        <linearGradient id="wg" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#1e3a5f"/>
+          <stop offset="100%" stop-color="#0c2340"/>
+        </linearGradient>
+      </defs>
+      <!-- Base -->
+      <rect x="0" y="0" width="64" height="64" fill="url(#wg)"/>
+      <!-- Brick mortar lines -->
+      <line x1="0" y1="21" x2="64" y2="21" stroke="#0a1c35" stroke-width="2"/>
+      <line x1="0" y1="42" x2="64" y2="42" stroke="#0a1c35" stroke-width="2"/>
+      <!-- Row 1 joints -->
+      <line x1="32" y1="0" x2="32" y2="21" stroke="#0a1c35" stroke-width="2"/>
+      <!-- Row 2 joints (offset) -->
+      <line x1="16" y1="21" x2="16" y2="42" stroke="#0a1c35" stroke-width="2"/>
+      <line x1="48" y1="21" x2="48" y2="42" stroke="#0a1c35" stroke-width="2"/>
+      <!-- Row 3 joints -->
+      <line x1="32" y1="42" x2="32" y2="64" stroke="#0a1c35" stroke-width="2"/>
+      <!-- Top edge highlight -->
+      <rect x="0" y="0" width="64" height="3" fill="rgba(255,255,255,0.10)"/>
+      <line x1="0" y1="0" x2="64" y2="0" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <!-- Left edge -->
+      <rect x="0" y="0" width="2" height="64" fill="rgba(255,255,255,0.06)"/>
+    </svg>`
+  },
+  {
+    id: 'obstacle-block',
+    name: 'Obstacle Block',
+    size: '64×64',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+      <defs>
+        <linearGradient id="og" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#7c2d12"/>
+          <stop offset="100%" stop-color="#431407"/>
+        </linearGradient>
+        <filter id="sharp">
+          <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#ef4444" flood-opacity="0.4"/>
+        </filter>
+      </defs>
+      <!-- Body -->
+      <rect x="4" y="4" width="56" height="56" rx="8" fill="url(#og)" filter="url(#sharp)"/>
+      <!-- Danger X -->
+      <line x1="18" y1="18" x2="46" y2="46" stroke="#f87171" stroke-width="5" stroke-linecap="round"/>
+      <line x1="46" y1="18" x2="18" y2="46" stroke="#f87171" stroke-width="5" stroke-linecap="round"/>
+      <!-- Warning border -->
+      <rect x="4" y="4" width="56" height="56" rx="8" fill="none" stroke="#f87171" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"/>
+      <!-- Top shine -->
+      <rect x="10" y="6" width="20" height="4" rx="2" fill="rgba(255,255,255,0.12)"/>
+    </svg>`
+  },
+];
+
+const TILES = [
+  {
+    id: 'tile-grass-a',
+    name: 'Grass A',
+    size: '32×32',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64">
+      <rect width="32" height="32" fill="#1a2e1a"/>
+      <!-- Subtle grid -->
+      <rect x="0" y="0" width="32" height="32" fill="none" stroke="#1e351e" stroke-width="0.5"/>
+      <!-- Grass blades -->
+      <line x1="6"  y1="32" x2="5"  y2="24" stroke="#2d5a2d" stroke-width="1" stroke-linecap="round"/>
+      <line x1="10" y1="32" x2="12" y2="22" stroke="#286628" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="22" y1="32" x2="21" y2="25" stroke="#2d5a2d" stroke-width="1" stroke-linecap="round"/>
+      <line x1="28" y1="32" x2="30" y2="23" stroke="#286628" stroke-width="1" stroke-linecap="round"/>
+      <!-- Darker variant overlay -->
+      <rect x="0" y="0" width="32" height="32" fill="rgba(0,0,0,0.06)"/>
+    </svg>`
+  },
+  {
+    id: 'tile-grass-b',
+    name: 'Grass B',
+    size: '32×32',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64">
+      <rect width="32" height="32" fill="#152615"/>
+      <rect x="0" y="0" width="32" height="32" fill="none" stroke="#1c321c" stroke-width="0.5"/>
+      <!-- Dots / pebbles -->
+      <circle cx="8" cy="8" r="1.5" fill="#1e351e"/>
+      <circle cx="24" cy="12" r="1" fill="#1e351e"/>
+      <circle cx="14" cy="22" r="1.5" fill="#1e351e"/>
+      <circle cx="28" cy="26" r="1" fill="#1e351e"/>
+    </svg>`
+  },
+  {
+    id: 'tile-desert-a',
+    name: 'Desert A',
+    size: '32×32',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64">
+      <rect width="32" height="32" fill="#2d1e0e"/>
+      <rect x="0" y="0" width="32" height="32" fill="none" stroke="#38240f" stroke-width="0.5"/>
+      <!-- Sand ripples -->
+      <path d="M0,12 Q8,10 16,12 Q24,14 32,12" fill="none" stroke="#3d2810" stroke-width="0.8"/>
+      <path d="M0,20 Q8,18 16,20 Q24,22 32,20" fill="none" stroke="#3d2810" stroke-width="0.8"/>
+      <!-- Pebble -->
+      <ellipse cx="10" cy="26" rx="3" ry="1.5" fill="#3d2810"/>
+      <ellipse cx="24" cy="8" rx="2" ry="1" fill="#3d2810"/>
+    </svg>`
+  },
+  {
+    id: 'tile-desert-b',
+    name: 'Desert B',
+    size: '32×32',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64">
+      <rect width="32" height="32" fill="#261908"/>
+      <rect x="0" y="0" width="32" height="32" fill="none" stroke="#30200b" stroke-width="0.5"/>
+      <path d="M0,8 Q10,6 20,9 Q28,11 32,8" fill="none" stroke="#30200b" stroke-width="0.8"/>
+      <path d="M0,22 Q12,20 22,23 Q28,25 32,22" fill="none" stroke="#30200b" stroke-width="0.8"/>
+    </svg>`
+  },
+  {
+    id: 'tile-neon-a',
+    name: 'Neon A',
+    size: '32×32',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64">
+      <rect width="32" height="32" fill="#080818"/>
+      <!-- Neon grid lines -->
+      <line x1="16" y1="0" x2="16" y2="32" stroke="#4ade80" stroke-width="0.4" opacity="0.3"/>
+      <line x1="0" y1="16" x2="32" y2="16" stroke="#4ade80" stroke-width="0.4" opacity="0.3"/>
+      <rect x="0" y="0" width="32" height="32" fill="none" stroke="#4ade80" stroke-width="0.4" opacity="0.2"/>
+      <!-- Corner dots -->
+      <circle cx="0" cy="0" r="1.5" fill="#4ade80" opacity="0.5"/>
+      <circle cx="32" cy="0" r="1.5" fill="#4ade80" opacity="0.5"/>
+      <circle cx="0" cy="32" r="1.5" fill="#4ade80" opacity="0.5"/>
+      <circle cx="32" cy="32" r="1.5" fill="#4ade80" opacity="0.5"/>
+      <circle cx="16" cy="16" r="1" fill="#4ade80" opacity="0.3"/>
+    </svg>`
+  },
+  {
+    id: 'tile-neon-b',
+    name: 'Neon B',
+    size: '32×32',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64">
+      <rect width="32" height="32" fill="#060614"/>
+      <line x1="16" y1="0" x2="16" y2="32" stroke="#4ade80" stroke-width="0.4" opacity="0.15"/>
+      <line x1="0" y1="16" x2="32" y2="16" stroke="#4ade80" stroke-width="0.4" opacity="0.15"/>
+      <rect x="0" y="0" width="32" height="32" fill="none" stroke="#4ade80" stroke-width="0.4" opacity="0.12"/>
+    </svg>`
+  },
+];
+
+// ── UI Components ──
+const UI_COMPONENTS = [
+  {
+    id: 'btn-primary',
+    name: 'Button — Primary',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" width="160" height="48">
+      <defs>
+        <linearGradient id="btng" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#4ade80"/>
+          <stop offset="100%" stop-color="#16a34a"/>
+        </linearGradient>
+        <filter id="btnshadow">
+          <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#4ade80" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <rect x="0" y="4" width="160" height="40" rx="10" fill="url(#btng)" filter="url(#btnshadow)"/>
+      <rect x="0" y="4" width="160" height="12" rx="10" fill="rgba(255,255,255,0.15)"/>
+      <text x="80" y="29" text-anchor="middle" font-family="'DM Mono',monospace" font-weight="700" font-size="13" fill="#0d1117" letter-spacing="0.5">▶  PLAY</text>
+    </svg>`,
+    w: 160, h: 48
+  },
+  {
+    id: 'btn-secondary',
+    name: 'Button — Ghost',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" width="160" height="48">
+      <rect x="1" y="5" width="158" height="38" rx="9" fill="none" stroke="#21262d" stroke-width="1.5"/>
+      <text x="80" y="29" text-anchor="middle" font-family="'DM Mono',monospace" font-weight="500" font-size="12" fill="#6e7681" letter-spacing="0.5">🏠  MENU</text>
+    </svg>`,
+    w: 160, h: 48
+  },
+  {
+    id: 'score-box',
+    name: 'Score Box',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 72" width="140" height="72">
+      <rect x="0" y="0" width="140" height="72" rx="12" fill="#161b22" stroke="#21262d" stroke-width="1"/>
+      <text x="14" y="20" font-family="'DM Mono',monospace" font-size="9" fill="#6e7681" letter-spacing="2">SCORE</text>
+      <text x="14" y="52" font-family="'DM Mono',monospace" font-weight="700" font-size="30" fill="#e6edf3">1,240</text>
+    </svg>`,
+    w: 140, h: 72
+  },
+  {
+    id: 'score-best-box',
+    name: 'Score Best Box',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 72" width="140" height="72">
+      <rect x="0" y="0" width="140" height="72" rx="12" fill="#161b22" stroke="#21262d" stroke-width="1"/>
+      <text x="14" y="20" font-family="'DM Mono',monospace" font-size="9" fill="#6e7681" letter-spacing="2">★ BEST</text>
+      <text x="14" y="52" font-family="'DM Mono',monospace" font-weight="700" font-size="30" fill="#fbbf24">3,120</text>
+      <rect x="86" y="8" width="40" height="16" rx="5" fill="#4ade80"/>
+      <text x="106" y="20" text-anchor="middle" font-family="'DM Mono',monospace" font-weight="700" font-size="8" fill="#0d1117" letter-spacing="0.5">NEW</text>
+    </svg>`,
+    w: 140, h: 72
+  },
+  {
+    id: 'map-card',
+    name: 'Map Card',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">
+      <rect x="0" y="0" width="100" height="120" rx="14" fill="#161b22" stroke="#21262d" stroke-width="1"/>
+      <!-- Thumb -->
+      <rect x="8" y="8" width="84" height="60" rx="10" fill="#166534"/>
+      <text x="50" y="44" text-anchor="middle" font-size="26">🌿</text>
+      <!-- Name -->
+      <text x="50" y="83" text-anchor="middle" font-family="'DM Mono',monospace" font-weight="700" font-size="11" fill="#e6edf3">Meadow</text>
+      <!-- Stars -->
+      <text x="50" y="98" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#fbbf24">★★☆☆☆</text>
+      <!-- Selected indicator -->
+      <rect x="0" y="0" width="100" height="120" rx="14" fill="none" stroke="#4ade80" stroke-width="2"/>
+    </svg>`,
+    w: 100, h: 120
+  },
+  {
+    id: 'best-badge',
+    name: 'Best Badge',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" width="160" height="40">
+      <rect x="0" y="0" width="160" height="40" rx="20" fill="rgba(251,191,36,0.1)" stroke="rgba(251,191,36,0.3)" stroke-width="1.5"/>
+      <text x="80" y="25" text-anchor="middle" font-family="'DM Mono',monospace" font-weight="700" font-size="13" fill="#fbbf24">⭐ Best: 2,840 pts</text>
+    </svg>`,
+    w: 160, h: 40
+  },
+];
+
+// ════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════
+function init() {
+  renderPalette();
+  renderSprites();
+  renderTiles();
+  renderUI();
+}
+
+function renderPalette() {
+  const row = document.getElementById('palette-row');
+  PALETTE.forEach(p => {
+    row.innerHTML += `
+      <div class="swatch" onclick="copyText('${p.hex}','${p.name} copied!')">
+        <div class="swatch-dot" style="background:${p.hex}" title="${p.name}"></div>
+        <div class="swatch-hex">${p.hex}</div>
+      </div>`;
+  });
+}
+
+function renderSprites() {
+  const grid = document.getElementById('sprite-grid');
+  SPRITES.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'asset-card checker';
+    card.title = `Click to download ${s.name} SVG`;
+    card.innerHTML = `
+      <span class="copy-hint">↓ SVG</span>
+      <div class="asset-canvas">${s.svg}</div>
+      <div class="asset-name">${s.name}</div>
+      <div class="asset-size">${s.size} px</div>`;
+    card.onclick = () => downloadSVG(s.svg, s.id);
+    grid.appendChild(card);
+  });
+}
+
+function renderTiles() {
+  const grid = document.getElementById('tile-grid');
+  // Show tiles 4× scaled
+  TILES.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'asset-card';
+    card.title = `Click to download ${t.name} SVG`;
+    card.innerHTML = `
+      <span class="copy-hint">↓ SVG</span>
+      <div class="asset-canvas">${t.svg}</div>
+      <div class="asset-name">${t.name}</div>
+      <div class="asset-size">${t.size} px</div>`;
+    card.onclick = () => downloadSVG(t.svg, t.id);
+    grid.appendChild(card);
+  });
+}
+
+function renderUI() {
+  const grid = document.getElementById('ui-grid');
+  UI_COMPONENTS.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'asset-card';
+    card.style.width = Math.max(180, c.w + 32) + 'px';
+    card.title = `Click to download ${c.name} SVG`;
+    card.innerHTML = `
+      <span class="copy-hint">↓ SVG</span>
+      <div class="asset-canvas" style="width:${c.w}px;height:${c.h}px">${c.html}</div>
+      <div class="asset-name">${c.name}</div>
+      <div class="asset-size">${c.w}×${c.h} px</div>`;
+    card.onclick = () => downloadSVG(c.html, c.id);
+    grid.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════════
+//  EXPORT
+// ════════════════════════════════════════════
+function downloadSVG(svgStr, filename) {
+  const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${filename}.svg`;
+  a.click();
+  toast(`Downloaded ${filename}.svg`);
+}
+
+function svgToCanvas(svgStr, w, h) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const scale = 2; // 2× for retina
+    const canvas = document.createElement('canvas');
+    canvas.width = w * scale;
+    canvas.height = h * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    img.onload = () => { ctx.drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url); resolve(canvas); };
+    img.onerror = () => { resolve(null); };
+    img.src = url;
+  });
+}
+
+async function exportAllSVG() {
+  const all = [...SPRITES, ...TILES, ...UI_COMPONENTS.map(c => ({...c, svg: c.html}))];
+  // Build a combined SVG sprite sheet
+  const combined = buildSpriteSheet(all);
+  downloadSVG(combined, 'snake-assets-spritesheet');
+  toast('Exported SVG sprite sheet!');
+}
+
+function buildSpriteSheet(assets) {
+  const cols = 6;
+  const cellW = 100, cellH = 120, padding = 16;
+  const rows = Math.ceil(assets.length / cols);
+  const W = cols * (cellW + padding) + padding;
+  const H = rows * (cellH + padding) + padding + 40;
+
+  let defs = `<defs>
+    <style>text{font-family:'DM Mono',monospace;}</style>
+  </defs>`;
+
+  let items = '';
+  assets.forEach((a, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = padding + col * (cellW + padding);
+    const y = 40 + padding + row * (cellH + padding);
+    const svgSrc = a.svg || a.html || '';
+    items += `<g transform="translate(${x},${y})">
+      ${svgSrc}
+      <text x="${cellW/2}" y="${cellH + 14}" text-anchor="middle" font-size="9" fill="#6e7681">${a.id}</text>
+    </g>`;
+  });
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+    <rect width="${W}" height="${H}" fill="#0d1117"/>
+    ${defs}
+    <text x="${padding}" y="26" font-size="14" font-weight="700" fill="#4ade80" font-family="'DM Mono',monospace">🐍 Snake — Asset Sprite Sheet</text>
+    ${items}
+  </svg>`;
+}
+
+async function exportAllPNG() {
+  toast('Exporting PNGs... (one moment)');
+  const all = [...SPRITES, ...TILES, ...UI_COMPONENTS.map(c => ({...c, svg: c.html}))];
+  for (const asset of all) {
+    const svgStr = asset.svg || asset.html || '';
+    // Parse width/height from SVG
+    const tmp = document.createElement('div');
+    tmp.innerHTML = svgStr;
+    const svgEl = tmp.querySelector('svg');
+    const w = parseInt(svgEl?.getAttribute('width') || '64');
+    const h = parseInt(svgEl?.getAttribute('height') || '64');
+    const canvas = await svgToCanvas(svgStr, w, h);
+    if (!canvas) continue;
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `${asset.id}.png`;
+    a.click();
+    await new Promise(r => setTimeout(r, 80));
+  }
+  toast('All PNGs exported!');
+}
+
+function copySVGSprite() {
+  const all = [...SPRITES, ...TILES, ...UI_COMPONENTS.map(c => ({...c, svg: c.html}))];
+  const sprite = buildSpriteSheet(all);
+  navigator.clipboard.writeText(sprite).then(() => toast('SVG sprite copied to clipboard!'));
+}
+
+function copyText(text, msg) {
+  navigator.clipboard.writeText(text).then(() => toast(msg || `Copied: ${text}`));
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+init();
+</script>
+</body>
+</html>

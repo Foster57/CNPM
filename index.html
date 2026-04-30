@@ -11,40 +11,210 @@
     <div id="app">
       <!-- Main Menu -->
       <div id="main-menu" class="screen active">
-        <h1>Snake Game</h1>
-        <button id="btn-start">Start Game</button>
+        <canvas id="menu-bg"></canvas>
+        <div class="menu-content">
+          <div class="badge">5 challenging maps</div>
+          <div class="title">Snake<span>Arena</span></div>
+          <div class="subtitle">Classic snake — eat, grow, survive</div>
+      
+          <div class="btn-group">
+            <button id="btn-menu-play" class="btn btn-primary">
+              <svg class="icon" viewBox="0 0 18 18" fill="none">
+                <polygon points="4,2 16,9 4,16" fill="#052e16"/>
+              </svg>
+              Play
+            </button>
+      
+            <button id="btn-menu-map" class="btn btn-secondary">
+              <svg class="icon" viewBox="0 0 18 18" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round">
+                <rect x="2" y="2" width="6" height="6" rx="1.5"/>
+                <rect x="10" y="2" width="6" height="6" rx="1.5"/>
+                <rect x="2" y="10" width="6" height="6" rx="1.5"/>
+                <rect x="10" y="10" width="6" height="6" rx="1.5"/>
+              </svg>
+              Map select
+            </button>
+          </div>
+      
+          <div class="hs-strip">
+            <svg class="hs-star" viewBox="0 0 16 16">
+              <polygon points="8,1 10,6 15.5,6.5 11.5,10 13,15.5 8,12.5 3,15.5 4.5,10 0.5,6.5 6,6" fill="#fbbf24"/>
+            </svg>
+            <span class="hs-label">Overall Best</span>
+            <span class="hs-val" id="menu-overall-best">0 pts</span>
+          </div>
+        </div>
+        <div class="ver">v1.0 MVP</div>
       </div>
 
       <!-- Map Selection -->
       <div id="map-selection" class="screen">
-        <h2>Select Map</h2>
-        <div id="maps-list"></div>
-        <button id="btn-back-to-menu">Back</button>
+        <div class="topbar">
+          <button id="btn-back-to-menu" class="back-btn" aria-label="Back">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#9ca3af" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 3L5 8l5 5"/>
+            </svg>
+          </button>
+          <div class="topbar-title">Choose your map</div>
+          <div class="topbar-right"></div>
+        </div>
+      
+        <div class="section-label">All maps</div>
+        <div class="cards-grid" id="cards-grid"></div>
+        <div class="detail-panel" id="detail-panel"></div>
       </div>
 
       <!-- Gameplay -->
       <div id="gameplay" class="screen">
-        <div class="header">
-          <span id="current-map-name">Map Name</span>
-          <span id="current-score">Score: 0</span>
+        <div class="gp-topbar">
+          <div class="map-pill">
+            <div class="map-dot" id="gp-map-dot"></div>
+            <span class="map-name" id="gp-map-name">Map</span>
+          </div>
+          <div class="hud">
+            <div class="score-block">
+              <div class="score-label">Score</div>
+              <div class="score-val" id="current-score">0</div>
+            </div>
+            <div class="hud-sep"></div>
+            <div class="score-block">
+              <div class="score-label">Best</div>
+              <div class="score-val gold" id="current-best">0</div>
+            </div>
+          </div>
+          <button class="pause-btn" id="btn-pause" aria-label="Pause">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect x="2" y="1" width="4" height="12" rx="1.5" fill="#6b7280"/>
+              <rect x="8" y="1" width="4" height="12" rx="1.5" fill="#6b7280"/>
+            </svg>
+          </button>
         </div>
-        <!-- 20x20 grid -> let's say 400x400px so each cell is 20x20px -->
-        <canvas id="game-canvas" width="400" height="400"></canvas>
-      </div>
+      
+        <div class="board-wrap">
+          <canvas id="game-canvas"></canvas>
+        </div>
+      
+        <div class="bottombar">
+          <div class="hint">
+            <div class="keys">
+              <div class="key">W</div><div class="key">A</div><div class="key">S</div><div class="key">D</div>
+            </div>
+            <span style="margin-left:5px;">or arrows</span>
+          </div>
+          <div class="speed-pill" id="gp-speed">Speed: Medium</div>
+        </div>
 
-      <!-- Pause Screen -->
-      <div id="pause-screen" class="screen overlay">
-        <h2>Paused</h2>
-        <button id="btn-resume">Resume</button>
-        <button id="btn-quit-paused">Quit to Menu</button>
-      </div>
-
-      <!-- Game Over -->
-      <div id="game-over" class="screen overlay">
-        <h2>Game Over!</h2>
-        <p id="final-score">Score: 0</p>
-        <button id="btn-play-again">Play Again</button>
-        <button id="btn-quit-gameover">Quit to Menu</button>
+        <!-- Pause Screen Overlay -->
+        <div id="pause-screen" class="overlay overlay-blur">
+          <div class="pause-card">
+            <div class="pause-icon">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <rect x="3" y="2" width="6" height="18" rx="2" fill="#4ade80"/>
+                <rect x="13" y="2" width="6" height="18" rx="2" fill="#4ade80"/>
+              </svg>
+            </div>
+            <div class="pause-title">Paused</div>
+            <div class="pause-sub">Your progress is safe</div>
+    
+            <div class="stat-row">
+              <div class="stat-pill">
+                <div class="stat-lbl">Score</div>
+                <div class="stat-v" id="pause-score">0</div>
+              </div>
+              <div class="stat-pill">
+                <div class="stat-lbl">Best</div>
+                <div class="stat-v g" id="pause-best">0</div>
+              </div>
+            </div>
+    
+            <div class="btn-group">
+              <button id="btn-resume" class="pbtn pbtn-resume">
+                <svg width="14" height="14" viewBox="0 0 14 14">
+                  <polygon points="2,1 13,7 2,13" fill="#052e16"/>
+                </svg>
+                Resume
+              </button>
+              <button id="btn-restart-paused" class="pbtn pbtn-restart">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 7a5 5 0 1 0 1.5-3.5L2 2"/>
+                  <path d="M2 2v3h3"/>
+                </svg>
+                Restart
+              </button>
+              <div class="divider"></div>
+              <button id="btn-quit-paused" class="pbtn pbtn-menu">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round">
+                  <path d="M8 2L3 6.5 8 11"/>
+                </svg>
+                Back to Menu
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Game Over Overlay -->
+        <div id="game-over" class="overlay overlay-dark">
+          <div class="go-card">
+            <div class="go-icon-wrap">
+              <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+                <circle cx="13" cy="12" r="9" fill="rgba(248,113,113,.2)" stroke="#f87171" stroke-width="1.5"/>
+                <path d="M9 8.5L11.5 11M17 8.5L14.5 11" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+                <path d="M9.5 15.5c0 0 1.5-1.5 3.5-1.5s3.5 1.5 3.5 1.5" stroke="#f87171" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M13 3v1M13 22v1M3 12h1M22 12h1" stroke="#f87171" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
+              </svg>
+            </div>
+            <div class="go-title">Game Over</div>
+            <div class="go-reason" id="go-reason">You hit a wall</div>
+    
+            <div class="score-showcase">
+              <div class="sc-half">
+                <div class="sc-lbl">Final score</div>
+                <div class="sc-num current" id="go-score">0</div>
+              </div>
+              <div class="sc-half">
+                <div class="sc-lbl">Best score</div>
+                <div class="sc-num best" id="go-best">0</div>
+                <div class="new-badge" id="go-new-badge">New!</div>
+              </div>
+            </div>
+    
+            <div class="map-row">
+              <div class="map-row-left">
+                <div class="mr-dot" id="go-map-dot"></div>
+                <div>
+                  <div class="mr-lbl">Map played</div>
+                  <div class="mr-name" id="go-map-name">Map</div>
+                </div>
+              </div>
+              <div class="mr-diff" id="go-diff-dots"></div>
+            </div>
+    
+            <div class="btn-group">
+              <button id="btn-play-again" class="gbtn gbtn-primary">
+                <svg width="14" height="14" viewBox="0 0 14 14">
+                  <polygon points="2,1.5 13,7 2,12.5" fill="#450a0a"/>
+                </svg>
+                Play Again
+              </button>
+              <button id="btn-choose-map" class="gbtn gbtn-secondary">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1" y="1" width="5" height="5" rx="1"/>
+                  <rect x="8" y="1" width="5" height="5" rx="1"/>
+                  <rect x="1" y="8" width="5" height="5" rx="1"/>
+                  <rect x="8" y="8" width="5" height="5" rx="1"/>
+                </svg>
+                Choose Another Map
+              </button>
+              <div class="divider"></div>
+              <button id="btn-quit-gameover" class="gbtn gbtn-ghost">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round">
+                  <path d="M8 2L3 6.5 8 11"/>
+                </svg>
+                Back to Main Menu
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/main.js"></script>

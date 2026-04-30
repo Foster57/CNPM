@@ -1,0 +1,254 @@
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  .screen{
+    width:100%;max-width:680px;margin:0 auto;
+    background:#111827;border-radius:20px;overflow:hidden;
+    position:relative;
+    font-family:system-ui,sans-serif;
+  }
+  canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+  .content{
+    position:relative;z-index:2;
+    display:flex;flex-direction:column;align-items:center;
+    padding:56px 40px 48px;min-height:520px;
+  }
+  .badge{
+    font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+    color:#4ade80;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);
+    border-radius:20px;padding:4px 14px;margin-bottom:22px;
+  }
+  .title{
+    font-size:52px;font-weight:800;letter-spacing:-1.5px;color:#f9fafb;
+    line-height:1;margin-bottom:8px;text-align:center;
+  }
+  .title span{color:#4ade80;}
+  .subtitle{
+    font-size:14px;color:#6b7280;text-align:center;
+    margin-bottom:44px;letter-spacing:.02em;
+  }
+  .btn-group{display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;}
+  .btn{
+    width:100%;padding:0 24px;height:52px;border-radius:12px;
+    font-size:15px;font-weight:600;letter-spacing:.01em;
+    border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    transition:transform .12s,opacity .12s;
+  }
+  .btn:hover{transform:translateY(-1px);opacity:.92;}
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:#4ade80;color:#052e16;}
+  .btn-secondary{
+    background:rgba(255,255,255,.06);color:#e5e7eb;
+    border:1px solid rgba(255,255,255,.1);
+  }
+  .btn-ghost{
+    background:transparent;color:#6b7280;
+    border:1px solid rgba(255,255,255,.07);font-size:13px;height:44px;
+  }
+  .icon{width:18px;height:18px;flex-shrink:0;display:block;}
+  .divider{
+    width:100%;max-width:280px;
+    border:none;border-top:1px solid rgba(255,255,255,.07);
+    margin:6px 0;
+  }
+  .hs-strip{
+    margin-top:32px;
+    background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);
+    border-radius:10px;padding:10px 20px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .hs-star{width:16px;height:16px;fill:#fbbf24;flex-shrink:0;}
+  .hs-label{font-size:12px;color:#92400e;color:#fbbf24;opacity:.7;}
+  .hs-val{font-size:15px;font-weight:700;color:#fbbf24;margin-left:auto;}
+  .ver{position:absolute;bottom:14px;right:18px;font-size:11px;color:rgba(255,255,255,.15);z-index:3;}
+</style>
+
+<div class="screen">
+  <canvas id="bg"></canvas>
+  <div class="content">
+    <h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Snake Arena main menu screen with Play, Map Select, High Score, and Settings buttons</h2>
+    <div class="badge">5 challenging maps</div>
+    <div class="title">Snake<span>Arena</span></div>
+    <div class="subtitle">Classic snake — eat, grow, survive</div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 18 18" fill="none">
+          <polygon points="4,2 16,9 4,16" fill="#052e16"/>
+        </svg>
+        Play
+      </button>
+
+      <button class="btn btn-secondary">
+        <svg class="icon" viewBox="0 0 18 18" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round">
+          <rect x="2" y="2" width="6" height="6" rx="1.5"/>
+          <rect x="10" y="2" width="6" height="6" rx="1.5"/>
+          <rect x="2" y="10" width="6" height="6" rx="1.5"/>
+          <rect x="10" y="10" width="6" height="6" rx="1.5"/>
+        </svg>
+        Map select
+      </button>
+
+      <button class="btn btn-secondary">
+        <svg class="icon" viewBox="0 0 18 18" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="9,2 11.5,7 17,7.5 13,11.5 14.5,17 9,14 3.5,17 5,11.5 1,7.5 6.5,7"/>
+        </svg>
+        High score
+      </button>
+
+      <hr class="divider">
+
+      <button class="btn btn-ghost">
+        <svg class="icon" viewBox="0 0 18 18" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="9" cy="9" r="3"/>
+          <path d="M9 1v2M9 15v2M1 9h2M15 9h2M3.22 3.22l1.42 1.42M13.36 13.36l1.42 1.42M3.22 14.78l1.42-1.42M13.36 4.64l1.42-1.42"/>
+        </svg>
+        Settings
+      </button>
+    </div>
+
+    <div class="hs-strip">
+      <svg class="hs-star" viewBox="0 0 16 16">
+        <polygon points="8,1 10,6 15.5,6.5 11.5,10 13,15.5 8,12.5 3,15.5 4.5,10 0.5,6.5 6,6" fill="#fbbf24"/>
+      </svg>
+      <span class="hs-label">Session best</span>
+      <span class="hs-val">3,240 pts</span>
+    </div>
+  </div>
+  <div class="ver">v1.0</div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('bg');
+  const screen = canvas.parentElement;
+  const ctx = canvas.getContext('2d');
+
+  const CELL = 28;
+  const BG = '#111827';
+  const EMPTY = '#131f2e';
+  const GRID_LINE = 'rgba(255,255,255,0.025)';
+  const GREEN_HEAD = '#4ade80';
+  const GREEN_BODY = '#22c55e';
+  const GREEN_TAIL = '#16a34a';
+  const FOOD_CLR = '#f87171';
+
+  let W, H, cols, rows;
+  let snake = [];
+  let dir = {x:1,y:0};
+  let food = {x:0,y:0};
+  let ticker = 0;
+  let frame = 0;
+
+  function resize(){
+    W = screen.offsetWidth;
+    H = screen.offsetHeight || 520;
+    canvas.width = W;
+    canvas.height = H;
+    cols = Math.ceil(W/CELL)+2;
+    rows = Math.ceil(H/CELL)+2;
+    initSnake();
+    placeFood();
+  }
+
+  function initSnake(){
+    snake = [];
+    const startX = 4, startY = Math.floor(rows/2);
+    for(let i=6;i>=0;i--) snake.push({x:startX+i,y:startY});
+    dir = {x:1,y:0};
+  }
+
+  function placeFood(){
+    let attempts=0;
+    do{
+      food = {x:2+Math.floor(Math.random()*(cols-4)), y:2+Math.floor(Math.random()*(rows-4))};
+      attempts++;
+    }while(snake.some(s=>s.x===food.x&&s.y===food.y)&&attempts<100);
+  }
+
+  function step(){
+    const head = snake[0];
+    const nx = head.x + dir.x;
+    const ny = head.y + dir.y;
+
+    if(nx<0||nx>=cols||ny<0||ny>=rows||snake.slice(1).some(s=>s.x===nx&&s.y===ny)){
+      initSnake();
+      placeFood();
+      return;
+    }
+
+    snake.unshift({x:nx,y:ny});
+    if(nx===food.x&&ny===food.y){
+      placeFood();
+    } else {
+      snake.pop();
+    }
+
+    const choices = [{x:1,y:0},{x:0,y:1},{x:-1,y:0},{x:0,y:-1}];
+    if(Math.random()<0.18){
+      const valid = choices.filter(d=>!(d.x===-dir.x&&d.y===-dir.y));
+      const safe = valid.filter(d=>{
+        const hx=head.x+d.x,hy=head.y+d.y;
+        return hx>=0&&hx<cols&&hy>=0&&hy<rows&&!snake.slice(1).some(s=>s.x===hx&&s.y===hy);
+      });
+      if(safe.length>0) dir=safe[Math.floor(Math.random()*safe.length)];
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=BG;
+    ctx.fillRect(0,0,W,H);
+
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        if((r+c)%2===0){
+          ctx.fillStyle=EMPTY;
+          ctx.fillRect(c*CELL,r*CELL,CELL-1,CELL-1);
+        }
+      }
+    }
+
+    const pulse = 0.55 + 0.25*Math.sin(frame*0.07);
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = FOOD_CLR;
+    const fr = CELL*0.32*pulse;
+    ctx.beginPath();
+    ctx.arc(food.x*CELL+CELL/2, food.y*CELL+CELL/2, fr, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    const len = snake.length;
+    snake.forEach((seg,i)=>{
+      const ratio = i/len;
+      let clr;
+      if(i===0) clr=GREEN_HEAD;
+      else if(ratio<0.4) clr=GREEN_BODY;
+      else clr=GREEN_TAIL;
+
+      const alpha = i===0 ? 0.45 : 0.18 + (1-ratio)*0.22;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = clr;
+      const pad = i===0?2:3;
+      const r = i===0?5:4;
+      ctx.beginPath();
+      ctx.roundRect(seg.x*CELL+pad, seg.y*CELL+pad, CELL-pad*2, CELL-pad*2, r);
+      ctx.fill();
+    });
+    ctx.globalAlpha=1;
+  }
+
+  function loop(){
+    frame++;
+    ticker++;
+    if(ticker%6===0) step();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  resize();
+  window.addEventListener('resize',resize);
+  requestAnimationFrame(loop);
+})();
+</script>
