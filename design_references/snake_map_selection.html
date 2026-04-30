@@ -1,0 +1,317 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.screen{
+  width:100%;background:#0f1923;border-radius:20px;overflow:hidden;
+  font-family:system-ui,sans-serif;padding:28px 24px 32px;
+}
+.topbar{display:flex;align-items:center;margin-bottom:28px;}
+.back-btn{
+  width:36px;height:36px;border-radius:9px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .15s;
+}
+.back-btn:hover{background:rgba(255,255,255,.1);}
+.topbar-title{flex:1;text-align:center;font-size:17px;font-weight:600;color:#f9fafb;}
+.topbar-right{width:36px;}
+.section-label{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;margin-bottom:14px;}
+.cards-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+.card{
+  border-radius:14px;overflow:hidden;cursor:pointer;
+  border:1.5px solid rgba(255,255,255,.07);
+  background:#1a2535;
+  transition:transform .18s,border-color .18s;
+  position:relative;
+}
+.card:hover{transform:translateY(-3px);}
+.card.active{border-color:rgba(74,222,128,.55);}
+.card.locked{opacity:.45;cursor:default;}
+.lock-overlay{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.35);z-index:5;border-radius:12px;
+}
+.thumb{width:100%;aspect-ratio:1;position:relative;overflow:hidden;}
+.thumb canvas{width:100%;height:100%;display:block;}
+.diff-bar{
+  position:absolute;bottom:6px;left:6px;right:6px;
+  display:flex;gap:3px;
+}
+.diff-dot{width:8px;height:8px;border-radius:50%;}
+.card-body{padding:9px 9px 10px;}
+.card-name{font-size:12px;font-weight:600;color:#f9fafb;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-hs{font-size:10px;color:#fbbf24;margin-bottom:7px;display:flex;align-items:center;gap:3px;}
+.play-btn{
+  width:100%;height:28px;border-radius:7px;border:none;cursor:pointer;
+  font-size:11px;font-weight:700;letter-spacing:.03em;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  transition:opacity .15s;
+}
+.play-btn:hover{opacity:.85;}
+.detail-panel{
+  background:#1a2535;border-radius:14px;border:1.5px solid rgba(74,222,128,.2);
+  padding:18px 20px;display:flex;align-items:center;gap:20px;
+}
+.detail-thumb{
+  width:90px;height:90px;border-radius:10px;overflow:hidden;flex-shrink:0;
+  border:1px solid rgba(255,255,255,.08);
+}
+.detail-thumb canvas{width:100%;height:100%;display:block;}
+.detail-info{flex:1;min-width:0;}
+.detail-name{font-size:18px;font-weight:700;color:#f9fafb;margin-bottom:2px;}
+.detail-sub{font-size:12px;color:#6b7280;margin-bottom:10px;}
+.detail-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.stat-box{background:rgba(255,255,255,.05);border-radius:8px;padding:7px 10px;}
+.stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:2px;}
+.stat-val{font-size:14px;font-weight:600;}
+.detail-play{
+  height:42px;border-radius:10px;border:none;cursor:pointer;
+  font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;transition:opacity .15s;
+}
+.detail-play:hover{opacity:.88;}
+</style>
+
+<div class="screen">
+  <h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Map selection screen with 5 playable maps: Classic Grass Field, Garden Maze, Desert Grid, Neon Lab, and Cyber Arena</h2>
+
+  <div class="topbar">
+    <button class="back-btn" aria-label="Back">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#9ca3af" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 3L5 8l5 5"/>
+      </svg>
+    </button>
+    <div class="topbar-title">Choose your map</div>
+    <div class="topbar-right"></div>
+  </div>
+
+  <div class="section-label">All maps</div>
+
+  <div class="cards-grid" id="cards-grid"></div>
+
+  <div class="detail-panel" id="detail-panel"></div>
+</div>
+
+<script>
+const MAPS = [
+  {
+    id:0, name:"Classic Grass Field", short:"Grass Field",
+    diff:1, speed:"Slow", obstacle:"None",
+    hs:"2,840", locked:false,
+    accent:"#4ade80", accentDim:"#166534",
+    desc:"Open meadow — no obstacles",
+    drawThumb: function(ctx,w,h){
+      ctx.fillStyle="#132a18"; ctx.fillRect(0,0,w,h);
+      for(let r=0;r<Math.ceil(h/14)+1;r++)
+        for(let c=0;c<Math.ceil(w/14)+1;c++)
+          if((r+c)%2===0){ctx.fillStyle="#172e1c";ctx.fillRect(c*14,r*14,13,13);}
+      drawSnakeOnThumb(ctx,w,h,"#4ade80","#22c55e",[{x:2,y:3},{x:3,y:3},{x:4,y:3},{x:4,y:4},{x:4,y:5}]);
+      drawFood(ctx,w*0.7,h*0.3,"#f87171");
+    }
+  },
+  {
+    id:1, name:"Garden Maze", short:"Garden Maze",
+    diff:2, speed:"Medium", obstacle:"Sparse",
+    hs:"1,920", locked:false,
+    accent:"#86efac", accentDim:"#14532d",
+    desc:"Scattered bushes — plan ahead",
+    drawThumb: function(ctx,w,h){
+      ctx.fillStyle="#0e2010"; ctx.fillRect(0,0,w,h);
+      for(let r=0;r<Math.ceil(h/14)+1;r++)
+        for(let c=0;c<Math.ceil(w/14)+1;c++)
+          if((r+c)%2===0){ctx.fillStyle="#112514";ctx.fillRect(c*14,r*14,13,13);}
+      const obs=[[1,1],[1,2],[5,3],[5,4],[3,5],[3,6]];
+      obs.forEach(([c,r])=>{ctx.fillStyle="#2d5a1b";ctx.strokeStyle="#4a8a2a";ctx.lineWidth=1;
+        ctx.beginPath();roundRect2(ctx,c*14+1,r*14+1,12,12,3);ctx.fill();ctx.stroke();});
+      drawSnakeOnThumb(ctx,w,h,"#86efac","#4ade80",[{x:4,y:2},{x:3,y:2},{x:2,y:2},{x:2,y:3},{x:2,y:4}]);
+      drawFood(ctx,w*0.72,h*0.65,"#fbbf24");
+    }
+  },
+  {
+    id:2, name:"Desert Grid", short:"Desert Grid",
+    diff:3, speed:"Medium", obstacle:"Grid",
+    hs:"980", locked:false,
+    accent:"#fbbf24", accentDim:"#78350f",
+    desc:"Stone grid — navigate the lanes",
+    drawThumb: function(ctx,w,h){
+      ctx.fillStyle="#1a1000"; ctx.fillRect(0,0,w,h);
+      for(let r=0;r<Math.ceil(h/14)+1;r++)
+        for(let c=0;c<Math.ceil(w/14)+1;c++)
+          if((r+c)%2===0){ctx.fillStyle="#1e1400";ctx.fillRect(c*14,r*14,13,13);}
+      [[1,1],[3,1],[5,1],[1,3],[3,3],[5,3],[1,5],[3,5],[5,5]].forEach(([c,r])=>{
+        ctx.fillStyle="#7c4a00";ctx.strokeStyle="#b86e00";ctx.lineWidth=1;
+        ctx.beginPath();roundRect2(ctx,c*14+1,r*14+1,12,12,2);ctx.fill();ctx.stroke();
+      });
+      drawSnakeOnThumb(ctx,w,h,"#fbbf24","#f59e0b",[{x:4,y:4},{x:4,y:5},{x:4,y:6},{x:3,y:6}]);
+      drawFood(ctx,w*0.15,h*0.55,"#f87171");
+    }
+  },
+  {
+    id:3, name:"Neon Lab", short:"Neon Lab",
+    diff:4, speed:"Fast", obstacle:"Complex",
+    hs:"540", locked:false,
+    accent:"#60a5fa", accentDim:"#1e3a5f",
+    desc:"Neon corridors — think fast",
+    drawThumb: function(ctx,w,h){
+      ctx.fillStyle="#030d1a"; ctx.fillRect(0,0,w,h);
+      for(let r=0;r<Math.ceil(h/14)+1;r++)
+        for(let c=0;c<Math.ceil(w/14)+1;c++)
+          if((r+c)%2===0){ctx.fillStyle="#050f22";ctx.fillRect(c*14,r*14,13,13);}
+      [[1,1],[2,1],[3,1],[5,1],[6,1],[0,3],[6,3],[0,5],[1,5],[5,5],[6,5]].forEach(([c,r])=>{
+        ctx.fillStyle="#0f3060";ctx.strokeStyle="#2563eb";ctx.lineWidth=1.2;
+        ctx.beginPath();roundRect2(ctx,c*14+1,r*14+1,12,12,2);ctx.fill();ctx.stroke();
+      });
+      drawSnakeOnThumb(ctx,w,h,"#60a5fa","#3b82f6",[{x:4,y:3},{x:4,y:4},{x:4,y:5},{x:3,y:5},{x:2,y:5}]);
+      drawFood(ctx,w*0.5,h*0.2,"#60a5fa");
+    }
+  },
+  {
+    id:4, name:"Cyber Arena", short:"Cyber Arena",
+    diff:5, speed:"Max", obstacle:"Dense",
+    hs:"—", locked:false,
+    accent:"#f87171", accentDim:"#7f1d1d",
+    desc:"Blood red arena — max difficulty",
+    drawThumb: function(ctx,w,h){
+      ctx.fillStyle="#0d0005"; ctx.fillRect(0,0,w,h);
+      for(let r=0;r<Math.ceil(h/14)+1;r++)
+        for(let c=0;c<Math.ceil(w/14)+1;c++)
+          if((r+c)%2===0){ctx.fillStyle="#110008";ctx.fillRect(c*14,r*14,13,13);}
+      [[1,1],[2,1],[4,1],[5,1],[0,3],[2,3],[4,3],[6,3],[1,5],[2,5],[4,5],[5,5]].forEach(([c,r])=>{
+        ctx.fillStyle="#5a0018";ctx.strokeStyle="#dc2626";ctx.lineWidth=1.2;
+        ctx.beginPath();roundRect2(ctx,c*14+1,r*14+1,12,12,2);ctx.fill();ctx.stroke();
+      });
+      drawSnakeOnThumb(ctx,w,h,"#f87171","#ef4444",[{x:3,y:2},{x:3,y:3},{x:3,y:4},{x:3,y:5}]);
+      drawFood(ctx,w*0.77,h*0.5,"#f87171");
+    }
+  }
+];
+
+function roundRect2(ctx,x,y,w,h,r){
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+function drawSnakeOnThumb(ctx,w,h,headClr,bodyClr,segs){
+  segs.forEach((s,i)=>{
+    ctx.fillStyle=i===0?headClr:bodyClr;
+    ctx.globalAlpha=i===0?0.9:0.65-i*0.07;
+    ctx.beginPath();
+    roundRect2(ctx,s.x*14+2,s.y*14+2,10,10,i===0?4:3);
+    ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+function drawFood(ctx,x,y,clr){
+  ctx.fillStyle=clr;ctx.globalAlpha=0.9;
+  ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
+}
+
+const DIFF_LABELS=["","Easy","Easy+","Medium","Hard","Expert"];
+const DIFF_COLORS=["","#4ade80","#86efac","#fbbf24","#f97316","#f87171"];
+
+let selected=0;
+
+function buildCards(){
+  const grid=document.getElementById('cards-grid');
+  grid.innerHTML='';
+  MAPS.forEach((m,i)=>{
+    const card=document.createElement('div');
+    card.className='card'+(i===selected?' active':'')+(m.locked?' locked':'');
+
+    const thumbWrap=document.createElement('div');
+    thumbWrap.className='thumb';
+    const cv=document.createElement('canvas');
+    cv.width=120;cv.height=120;
+    m.drawThumb(cv.getContext('2d'),120,120);
+    thumbWrap.appendChild(cv);
+
+    const diffBar=document.createElement('div');
+    diffBar.className='diff-bar';
+    for(let d=1;d<=5;d++){
+      const dot=document.createElement('div');
+      dot.className='diff-dot';
+      dot.style.background=d<=m.diff?DIFF_COLORS[m.diff]:'rgba(255,255,255,.15)';
+      diffBar.appendChild(dot);
+    }
+    thumbWrap.appendChild(diffBar);
+    card.appendChild(thumbWrap);
+
+    const body=document.createElement('div');
+    body.className='card-body';
+
+    const name=document.createElement('div');
+    name.className='card-name';name.title=m.name;name.textContent=m.short;
+    body.appendChild(name);
+
+    const hs=document.createElement('div');
+    hs.className='card-hs';
+    hs.innerHTML=`<svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,1 6.5,4 10,4.3 7.5,6.8 8.3,10 5,8.3 1.7,10 2.5,6.8 0,4.3 3.5,4" fill="#fbbf24"/></svg>${m.hs}`;
+    body.appendChild(hs);
+
+    const btn=document.createElement('button');
+    btn.className='play-btn';
+    btn.style.background=i===selected?m.accent:'rgba(255,255,255,.07)';
+    btn.style.color=i===selected?m.accentDim:'#9ca3af';
+    btn.innerHTML=`<svg width="9" height="9" viewBox="0 0 9 9"><polygon points="2,1 8,4.5 2,8" fill="currentColor"/></svg>Play`;
+    body.appendChild(btn);
+    card.appendChild(body);
+
+    if(m.locked){
+      const lo=document.createElement('div');lo.className='lock-overlay';
+      lo.innerHTML=`<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="9" width="12" height="9" rx="2"/><path d="M7 9V6a3 3 0 016 0v3"/></svg>`;
+      card.appendChild(lo);
+    }
+
+    card.addEventListener('click',()=>{if(!m.locked){selected=i;buildCards();buildDetail();}});
+    grid.appendChild(card);
+  });
+}
+
+function buildDetail(){
+  const m=MAPS[selected];
+  const panel=document.getElementById('detail-panel');
+  panel.style.borderColor=`rgba(${hexToRgb(m.accent)},.25)`;
+
+  const cv=document.createElement('canvas');
+  cv.width=180;cv.height=180;
+  m.drawThumb(cv.getContext('2d'),180,180);
+
+  panel.innerHTML=`
+    <div class="detail-thumb" id="dt"></div>
+    <div class="detail-info">
+      <div class="detail-name">${m.name}</div>
+      <div class="detail-sub">${m.desc}</div>
+      <div class="detail-stats">
+        <div class="stat-box">
+          <div class="stat-label">Difficulty</div>
+          <div class="stat-val" style="color:${DIFF_COLORS[m.diff]}">${DIFF_LABELS[m.diff]}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Speed</div>
+          <div class="stat-val" style="color:#e5e7eb">${m.speed}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Best score</div>
+          <div class="stat-val" style="color:#fbbf24">${m.hs}</div>
+        </div>
+      </div>
+      <button class="detail-play" style="background:${m.accent};color:${m.accentDim};">
+        <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="3,1.5 12,7 3,12.5" fill="currentColor"/></svg>
+        Play ${m.short}
+      </button>
+    </div>
+  `;
+  document.getElementById('dt').appendChild(cv);
+}
+
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+buildCards();
+buildDetail();
+</script>

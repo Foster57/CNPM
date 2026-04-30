@@ -1,0 +1,444 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,sans-serif;}
+.screen{width:100%;background:#0c1219;border-radius:20px;overflow:hidden;user-select:none;}
+
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px 12px;border-bottom:1px solid rgba(255,255,255,.05);
+  gap:12px;
+}
+.map-pill{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;padding:5px 12px 5px 8px;flex-shrink:0;
+}
+.map-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.map-name{font-size:12px;font-weight:500;color:#9ca3af;}
+
+.hud{display:flex;align-items:center;gap:8px;flex:1;justify-content:center;}
+.score-block{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:6px 16px;text-align:center;min-width:80px;
+}
+.score-label{font-size:9px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#4b5563;margin-bottom:1px;}
+.score-val{font-size:20px;font-weight:700;letter-spacing:-0.5px;color:#f9fafb;line-height:1.1;}
+.score-val.gold{color:#fbbf24;}
+.hud-sep{width:1px;height:28px;background:rgba(255,255,255,.07);}
+
+.pause-btn{
+  width:36px;height:36px;border-radius:9px;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .15s,transform .1s;
+}
+.pause-btn:hover{background:rgba(255,255,255,.1);}
+.pause-btn:active{transform:scale(.93);}
+
+.board-wrap{
+  padding:14px 16px 10px;display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+#gameCanvas{
+  border-radius:10px;display:block;
+  border:1.5px solid rgba(255,255,255,.07);
+  image-rendering:pixelated;
+}
+
+.bottombar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 18px 14px;gap:8px;
+}
+.hint{font-size:11px;color:#374151;display:flex;align-items:center;gap:5px;}
+.keys{display:flex;gap:3px;}
+.key{
+  width:20px;height:20px;border-radius:4px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:#6b7280;
+}
+.lives{display:flex;gap:5px;align-items:center;}
+.life-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;}
+.life-dot.spent{background:rgba(255,255,255,.1);}
+.speed-pill{
+  font-size:10px;font-weight:600;letter-spacing:.06em;
+  color:#6b7280;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:3px 10px;
+}
+
+.map-tabs{
+  display:flex;gap:6px;padding:0 16px 12px;
+}
+.tab{
+  padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;
+  border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#6b7280;
+  transition:all .15s;
+}
+.tab.on{border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.1);color:#4ade80;}
+</style>
+
+<div class="screen">
+  <h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Snake Arena gameplay screen showing a live animated game with HUD, score, high score, map name, pause button, and interactive map switcher</h2>
+
+  <div class="topbar">
+    <div class="map-pill">
+      <div class="map-dot" id="mapDot"></div>
+      <span class="map-name" id="mapLabel">Classic Grass Field</span>
+    </div>
+    <div class="hud">
+      <div class="score-block">
+        <div class="score-label">Score</div>
+        <div class="score-val" id="scoreDisp">0</div>
+      </div>
+      <div class="hud-sep"></div>
+      <div class="score-block">
+        <div class="score-label">Best</div>
+        <div class="score-val gold" id="hsDisp">2,840</div>
+      </div>
+    </div>
+    <button class="pause-btn" id="pauseBtn" aria-label="Pause">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="2" y="1" width="4" height="12" rx="1.5" fill="#6b7280"/>
+        <rect x="8" y="1" width="4" height="12" rx="1.5" fill="#6b7280"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="map-tabs" id="mapTabs"></div>
+
+  <div class="board-wrap">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <div class="bottombar">
+    <div class="hint">
+      <div class="keys">
+        <div class="key">W</div><div class="key">A</div><div class="key">S</div><div class="key">D</div>
+      </div>
+      <span>or arrow keys</span>
+    </div>
+    <div class="lives" id="livesRow">
+      <div class="life-dot"></div><div class="life-dot"></div><div class="life-dot"></div>
+    </div>
+    <div class="speed-pill" id="speedPill">Speed: Slow</div>
+  </div>
+</div>
+
+<script>
+const MAPS_DEF = [
+  {
+    name:"Classic Grass Field", dot:"#4ade80", speed:1, speedLabel:"Slow",
+    bg:"#111f14", cellA:"#132716", cellB:"#162d19",
+    wallClr:"#1e4024", wallBorder:"#2d5a33",
+    snakeH:"#4ade80", snakeB:"#22c55e", snakeT:"#16a34a",
+    foodClr:"#f87171", foodLabel:"Apple",
+    obstacles: function(cols,rows){ return []; }
+  },
+  {
+    name:"Garden Maze", dot:"#86efac", speed:1.4, speedLabel:"Medium",
+    bg:"#0e1f10", cellA:"#101e12", cellB:"#132415",
+    wallClr:"#1a3817", wallBorder:"#2a5222",
+    snakeH:"#86efac", snakeB:"#4ade80", snakeT:"#22c55e",
+    foodClr:"#fbbf24", foodLabel:"Berry",
+    obstacles: function(cols,rows){
+      const obs=[];
+      [[2,2],[2,3],[Math.floor(cols/2),3],[Math.floor(cols/2),4],
+       [cols-4,2],[cols-4,3],[2,rows-5],[2,rows-4],[cols-4,rows-5],[cols-4,rows-4]].forEach(([x,y])=>{
+        if(x>0&&x<cols-1&&y>0&&y<rows-1) obs.push({x,y});
+      });
+      return obs;
+    }
+  },
+  {
+    name:"Desert Grid", dot:"#fbbf24", speed:1.8, speedLabel:"Medium",
+    bg:"#170f00", cellA:"#1b1200", cellB:"#1f1500",
+    wallClr:"#4a2e00", wallBorder:"#7a5000",
+    snakeH:"#fbbf24", snakeB:"#f59e0b", snakeT:"#d97706",
+    foodClr:"#f87171", foodLabel:"Cactus",
+    obstacles: function(cols,rows){
+      const obs=[], stepX=Math.floor(cols/4), stepY=Math.floor(rows/4);
+      for(let gy=1;gy<=2;gy++) for(let gx=1;gx<=2;gx++){
+        const cx=gx*stepX, cy=gy*stepY;
+        [-1,0,1].forEach(dx=>{ if(cx+dx>0&&cx+dx<cols-1) obs.push({x:cx+dx,y:cy}); });
+      }
+      return obs;
+    }
+  },
+  {
+    name:"Neon Lab", dot:"#60a5fa", speed:2.4, speedLabel:"Fast",
+    bg:"#03080f", cellA:"#040a14", cellB:"#050c18",
+    wallClr:"#0c2a50", wallBorder:"#1d4ed8",
+    snakeH:"#60a5fa", snakeB:"#3b82f6", snakeT:"#2563eb",
+    foodClr:"#60a5fa", foodLabel:"Plasma",
+    obstacles: function(cols,rows){
+      const obs=[], mid=Math.floor(rows/2);
+      for(let x=2;x<=5;x++) obs.push({x,y:2});
+      for(let x=cols-6;x<=cols-3;x++) obs.push({x,y:2});
+      for(let y=mid-1;y<=mid+1;y++){obs.push({x:1,y});obs.push({x:cols-2,y});}
+      for(let x=2;x<=5;x++) obs.push({x,y:rows-3});
+      for(let x=cols-6;x<=cols-3;x++) obs.push({x,y:rows-3});
+      return obs;
+    }
+  },
+  {
+    name:"Cyber Arena", dot:"#f87171", speed:3.2, speedLabel:"Max",
+    bg:"#0a0005", cellA:"#0d0008", cellB:"#100009",
+    wallClr:"#4a0010", wallBorder:"#b91c1c",
+    snakeH:"#f87171", snakeB:"#ef4444", snakeT:"#dc2626",
+    foodClr:"#f87171", foodLabel:"Star",
+    obstacles: function(cols,rows){
+      const obs=[];
+      const pts=[
+        [2,2],[3,2],[cols-4,2],[cols-3,2],
+        [1,Math.floor(rows/2)],[2,Math.floor(rows/2)],[cols-3,Math.floor(rows/2)],[cols-2,Math.floor(rows/2)],
+        [2,rows-3],[3,rows-3],[cols-4,rows-3],[cols-3,rows-3],
+        [Math.floor(cols/2)-1,2],[Math.floor(cols/2),2],[Math.floor(cols/2)+1,2],
+        [Math.floor(cols/2)-1,rows-3],[Math.floor(cols/2),rows-3],[Math.floor(cols/2)+1,rows-3],
+      ];
+      pts.forEach(([x,y])=>{ if(x>0&&x<cols-1&&y>0&&y<rows-1) obs.push({x,y}); });
+      return obs;
+    }
+  }
+];
+
+const COLS=22, ROWS=16, CELL=26;
+let mapIdx=0, paused=false, score=0;
+let snake=[], dir={x:1,y:0}, nextDir={x:1,y:0}, food={x:0,y:0};
+let obstacles=[], ticker=0, frame=0, animId=null;
+let flashTimer=0;
+
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+canvas.width=COLS*CELL;
+canvas.height=ROWS*CELL;
+
+function initGame(){
+  const m=MAPS_DEF[mapIdx];
+  obstacles=m.obstacles(COLS,ROWS);
+  snake=[];
+  const sy=Math.floor(ROWS/2);
+  for(let i=5;i>=0;i--) snake.push({x:4+i,y:sy});
+  dir={x:1,y:0}; nextDir={x:1,y:0};
+  score=0; updateHUD();
+  placeFood(); flashTimer=0;
+}
+
+function placeFood(){
+  const m=MAPS_DEF[mapIdx];
+  let tries=0;
+  do{
+    food={x:1+Math.floor(Math.random()*(COLS-2)), y:1+Math.floor(Math.random()*(ROWS-2))};
+    tries++;
+  }while(tries<200&&(
+    snake.some(s=>s.x===food.x&&s.y===food.y)||
+    obstacles.some(o=>o.x===food.x&&o.y===food.y)
+  ));
+}
+
+function step(){
+  dir={...nextDir};
+  const head=snake[0];
+  const nx=head.x+dir.x, ny=head.y+dir.y;
+  if(nx<1||nx>=COLS-1||ny<1||ny>=ROWS-1||
+     snake.some(s=>s.x===nx&&s.y===ny)||
+     obstacles.some(o=>o.x===nx&&o.y===ny)){
+    initGame(); return;
+  }
+  snake.unshift({x:nx,y:ny});
+  if(nx===food.x&&ny===food.y){
+    score+=10; updateHUD(); flashTimer=8; placeFood();
+  } else {
+    snake.pop();
+  }
+}
+
+function updateHUD(){
+  document.getElementById('scoreDisp').textContent=score.toLocaleString();
+}
+
+function drawCell(x,y,clr,r=4){
+  ctx.fillStyle=clr;
+  ctx.beginPath();
+  ctx.roundRect(x*CELL+1,y*CELL+1,CELL-2,CELL-2,r);
+  ctx.fill();
+}
+
+function drawBg(){
+  const m=MAPS_DEF[mapIdx];
+  ctx.fillStyle=m.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    ctx.fillStyle=(r+c)%2===0?m.cellA:m.cellB;
+    ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
+  }
+}
+
+function drawWalls(){
+  const m=MAPS_DEF[mapIdx];
+  for(let c=0;c<COLS;c++){
+    drawWallCell(c,0,m); drawWallCell(c,ROWS-1,m);
+  }
+  for(let r=1;r<ROWS-1;r++){
+    drawWallCell(0,r,m); drawWallCell(COLS-1,r,m);
+  }
+}
+
+function drawWallCell(x,y,m){
+  ctx.fillStyle=m.wallClr;
+  ctx.fillRect(x*CELL,y*CELL,CELL,CELL);
+  ctx.strokeStyle=m.wallBorder;
+  ctx.lineWidth=1;
+  ctx.strokeRect(x*CELL+.5,y*CELL+.5,CELL-1,CELL-1);
+  ctx.fillStyle='rgba(255,255,255,0.03)';
+  ctx.fillRect(x*CELL+2,y*CELL+2,CELL-4,CELL/2-2);
+}
+
+function drawObstacles(){
+  const m=MAPS_DEF[mapIdx];
+  obstacles.forEach(o=>{
+    ctx.fillStyle=m.wallClr;
+    ctx.strokeStyle=m.wallBorder;
+    ctx.lineWidth=1.2;
+    ctx.beginPath();
+    ctx.roundRect(o.x*CELL+1,o.y*CELL+1,CELL-2,CELL-2,3);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.04)';
+    ctx.beginPath();
+    ctx.roundRect(o.x*CELL+3,o.y*CELL+3,CELL-6,4,2);
+    ctx.fill();
+  });
+}
+
+function drawSnake(){
+  const m=MAPS_DEF[mapIdx];
+  snake.forEach((seg,i)=>{
+    const isHead=i===0, isTail=i===snake.length-1;
+    let clr=isHead?m.snakeH:isTail?m.snakeT:m.snakeB;
+    const pad=isHead?1:isTail?3:2;
+    const r=isHead?6:isTail?3:4;
+    ctx.fillStyle=clr;
+    ctx.beginPath();
+    ctx.roundRect(seg.x*CELL+pad,seg.y*CELL+pad,CELL-pad*2,CELL-pad*2,r);
+    ctx.fill();
+    if(isHead){
+      const eyeOff=dir.x!==0?[dir.x>0?10:3,4]:[4,dir.y>0?10:3];
+      const eye2=dir.x!==0?[dir.x>0?10:3,10]:[10,dir.y>0?10:3];
+      [[eyeOff],[eye2]].forEach(([e])=>{
+        ctx.fillStyle='rgba(0,0,0,0.55)';
+        ctx.beginPath();
+        ctx.arc(seg.x*CELL+e[0],seg.y*CELL+e[1],2.8,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,0.6)';
+        ctx.beginPath();
+        ctx.arc(seg.x*CELL+e[0]-0.8,seg.y*CELL+e[1]-0.8,1,0,Math.PI*2);
+        ctx.fill();
+      });
+    }
+    if(isTail){
+      ctx.fillStyle='rgba(0,0,0,0.2)';
+      ctx.beginPath();
+      ctx.roundRect(seg.x*CELL+pad,seg.y*CELL+pad,CELL-pad*2,CELL-pad*2,r);
+      ctx.fill();
+    }
+  });
+}
+
+function drawFood(){
+  const m=MAPS_DEF[mapIdx];
+  const pulse=0.82+0.18*Math.sin(frame*0.12);
+  const fr=(CELL/2-3)*pulse;
+  const fx=food.x*CELL+CELL/2, fy=food.y*CELL+CELL/2;
+  ctx.fillStyle=m.foodClr;
+  ctx.globalAlpha=flashTimer>0?1:0.9;
+  ctx.beginPath(); ctx.arc(fx,fy,fr,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=0.25;
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(fx-fr*0.3,fy-fr*0.3,fr*0.35,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+  if(flashTimer>0){
+    ctx.strokeStyle='#fff';
+    ctx.lineWidth=1.5;
+    ctx.globalAlpha=flashTimer/8*0.5;
+    ctx.beginPath(); ctx.arc(fx,fy,fr+4+((8-flashTimer)/8)*6,0,Math.PI*2); ctx.stroke();
+    ctx.globalAlpha=1;
+    flashTimer--;
+  }
+}
+
+function drawPauseOverlay(){
+  ctx.fillStyle='rgba(5,10,18,0.72)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='rgba(255,255,255,0.08)';
+  ctx.beginPath();
+  ctx.roundRect(canvas.width/2-64,canvas.height/2-44,128,88,16);
+  ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.12)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  ctx.fillRect(canvas.width/2-14,canvas.height/2-16,8,32);
+  ctx.fillRect(canvas.width/2+6,canvas.height/2-16,8,32);
+  ctx.fillStyle='rgba(255,255,255,0.35)';
+  ctx.font='500 11px system-ui';
+  ctx.textAlign='center';
+  ctx.fillText('PAUSED',canvas.width/2,canvas.height/2+32);
+}
+
+function render(){
+  drawBg(); drawWalls(); drawObstacles(); drawSnake(); drawFood();
+  if(paused) drawPauseOverlay();
+}
+
+function gameLoop(){
+  frame++;
+  const m=MAPS_DEF[mapIdx];
+  const interval=Math.max(2,Math.round(10/m.speed));
+  if(!paused&&frame%interval===0) step();
+  render();
+  animId=requestAnimationFrame(gameLoop);
+}
+
+function buildTabs(){
+  const wrap=document.getElementById('mapTabs');
+  wrap.innerHTML='';
+  MAPS_DEF.forEach((m,i)=>{
+    const t=document.createElement('div');
+    t.className='tab'+(i===mapIdx?' on':'');
+    t.textContent=['Grass','Garden','Desert','Neon','Cyber'][i];
+    t.addEventListener('click',()=>{
+      mapIdx=i; buildTabs(); updateMapUI(); initGame();
+    });
+    wrap.appendChild(t);
+  });
+}
+
+function updateMapUI(){
+  const m=MAPS_DEF[mapIdx];
+  document.getElementById('mapDot').style.background=m.dot;
+  document.getElementById('mapLabel').textContent=m.name;
+  document.getElementById('speedPill').textContent='Speed: '+m.speedLabel;
+  document.getElementById('speedPill').style.color=m.dot;
+}
+
+document.getElementById('pauseBtn').addEventListener('click',()=>{
+  paused=!paused;
+  const btn=document.getElementById('pauseBtn');
+  if(paused){
+    btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 14 14"><polygon points="2,1 13,7 2,13" fill="#4ade80"/></svg>`;
+  } else {
+    btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="1" width="4" height="12" rx="1.5" fill="#6b7280"/><rect x="8" y="1" width="4" height="12" rx="1.5" fill="#6b7280"/></svg>`;
+  }
+});
+
+document.addEventListener('keydown',e=>{
+  const map={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},
+             w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0},
+             W:{x:0,y:-1},S:{x:0,y:1},A:{x:-1,y:0},D:{x:1,y:0}};
+  const nd=map[e.key];
+  if(nd&&!(nd.x===-dir.x&&nd.y===0)&&!(nd.y===-dir.y&&nd.x===0)){
+    nextDir=nd; if(paused){paused=false;}
+    e.preventDefault();
+  }
+  if(e.key==='p'||e.key==='P'||e.key===' ') document.getElementById('pauseBtn').click();
+});
+
+buildTabs(); updateMapUI(); initGame(); gameLoop();
+</script>

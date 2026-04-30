@@ -1,0 +1,305 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,sans-serif;}
+.screen{width:100%;background:#0c1219;border-radius:20px;overflow:hidden;position:relative;}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px 12px;border-bottom:1px solid rgba(255,255,255,.05);
+}
+.map-pill{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;padding:5px 12px 5px 8px;
+}
+.map-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;}
+.map-name{font-size:12px;font-weight:500;color:#9ca3af;}
+.hud{display:flex;align-items:center;gap:8px;}
+.score-block{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:6px 16px;text-align:center;min-width:80px;
+}
+.score-label{font-size:9px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#4b5563;margin-bottom:1px;}
+.score-val{font-size:20px;font-weight:700;color:#f9fafb;line-height:1.1;}
+.score-val.gold{color:#fbbf24;}
+.hud-sep{width:1px;height:28px;background:rgba(255,255,255,.07);}
+.dead-icon{
+  width:36px;height:36px;border-radius:9px;
+  border:1px solid rgba(248,113,113,.25);background:rgba(248,113,113,.08);
+  display:flex;align-items:center;justify-content:center;
+}
+.board-area{position:relative;}
+canvas{display:block;width:100%;}
+.overlay{
+  position:absolute;inset:0;
+  background:rgba(6,10,18,.82);
+  display:flex;align-items:center;justify-content:center;
+}
+.go-card{
+  background:#131d2b;
+  border:1.5px solid rgba(248,113,113,.18);
+  border-radius:22px;
+  padding:28px 28px 24px;
+  width:300px;
+  display:flex;flex-direction:column;align-items:center;
+}
+.go-icon-wrap{
+  width:56px;height:56px;border-radius:16px;
+  background:rgba(248,113,113,.1);border:1.5px solid rgba(248,113,113,.25);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:14px;
+}
+.go-title{font-size:26px;font-weight:800;color:#f9fafb;letter-spacing:-0.5px;margin-bottom:3px;}
+.go-reason{font-size:12px;color:#4b5563;margin-bottom:22px;}
+
+.score-showcase{
+  width:100%;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);border-radius:14px;
+  display:flex;overflow:hidden;margin-bottom:20px;
+}
+.sc-half{flex:1;padding:14px 12px;text-align:center;position:relative;}
+.sc-half:first-child{border-right:1px solid rgba(255,255,255,.07);}
+.sc-lbl{font-size:9px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#4b5563;margin-bottom:4px;}
+.sc-num{font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.sc-num.current{color:#f9fafb;}
+.sc-num.best{color:#fbbf24;}
+.new-badge{
+  position:absolute;top:8px;right:8px;
+  font-size:9px;font-weight:700;letter-spacing:.06em;
+  background:#fbbf24;color:#451a00;
+  border-radius:5px;padding:2px 6px;text-transform:uppercase;
+}
+.sc-sub{font-size:10px;color:#374151;margin-top:3px;}
+
+.map-row{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  border-radius:10px;padding:9px 12px;margin-bottom:20px;
+}
+.map-row-left{display:flex;align-items:center;gap:8px;}
+.mr-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;}
+.mr-lbl{font-size:10px;color:#4b5563;margin-bottom:1px;}
+.mr-name{font-size:13px;font-weight:600;color:#e5e7eb;}
+.mr-diff{display:flex;gap:3px;}
+.mr-dot2{width:7px;height:7px;border-radius:50%;}
+
+.btn-group{display:flex;flex-direction:column;gap:8px;width:100%;}
+.gbtn{
+  width:100%;border:none;cursor:pointer;
+  font-size:14px;font-weight:600;letter-spacing:.01em;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  border-radius:12px;transition:transform .12s,opacity .13s;
+}
+.gbtn:hover{opacity:.88;transform:translateY(-1px);}
+.gbtn:active{transform:scale(.97);}
+.gbtn-primary{height:48px;background:#f87171;color:#450a0a;}
+.gbtn-secondary{height:44px;background:rgba(255,255,255,.07);color:#e5e7eb;border:1px solid rgba(255,255,255,.1);}
+.gbtn-ghost{height:40px;background:transparent;color:#6b7280;border:1px solid rgba(255,255,255,.07);font-size:13px;}
+.divider{width:100%;height:1px;background:rgba(255,255,255,.06);margin:2px 0;}
+
+.motivate{
+  margin-top:14px;font-size:11px;color:#374151;text-align:center;line-height:1.5;
+}
+.motivate span{color:#4ade80;}
+</style>
+
+<div class="screen">
+  <h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Snake Arena game over screen showing final score 3,120, new best score, Play Again, Choose Another Map, and Back to Main Menu buttons</h2>
+
+  <div class="topbar">
+    <div class="map-pill">
+      <div class="map-dot"></div>
+      <span class="map-name">Classic Grass Field</span>
+    </div>
+    <div class="hud">
+      <div class="score-block">
+        <div class="score-label">Score</div>
+        <div class="score-val">3,120</div>
+      </div>
+      <div class="hud-sep"></div>
+      <div class="score-block">
+        <div class="score-label">Best</div>
+        <div class="score-val gold">3,120</div>
+      </div>
+    </div>
+    <div class="dead-icon">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="7" r="5.5" fill="rgba(248,113,113,.3)" stroke="#f87171" stroke-width="1.2"/>
+        <path d="M5.5 5.5L7 7M10.5 5.5L9 7" stroke="#f87171" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M6 9.5h4" stroke="#f87171" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="board-area">
+    <canvas id="gc"></canvas>
+
+    <div class="overlay">
+      <div class="go-card">
+
+        <div class="go-icon-wrap">
+          <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+            <circle cx="13" cy="12" r="9" fill="rgba(248,113,113,.2)" stroke="#f87171" stroke-width="1.5"/>
+            <path d="M9 8.5L11.5 11M17 8.5L14.5 11" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+            <path d="M9.5 15.5c0 0 1.5-1.5 3.5-1.5s3.5 1.5 3.5 1.5" stroke="#f87171" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M13 3v1M13 22v1M3 12h1M22 12h1" stroke="#f87171" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
+          </svg>
+        </div>
+
+        <div class="go-title">Game Over</div>
+        <div class="go-reason">You hit a wall</div>
+
+        <div class="score-showcase">
+          <div class="sc-half">
+            <div class="sc-lbl">Final score</div>
+            <div class="sc-num current" id="finalScore">0</div>
+            <div class="sc-sub">34 food eaten</div>
+          </div>
+          <div class="sc-half">
+            <div class="sc-lbl">Best score</div>
+            <div class="sc-num best">3,120</div>
+            <div class="new-badge" id="newBadge">New!</div>
+            <div class="sc-sub">All time</div>
+          </div>
+        </div>
+
+        <div class="map-row">
+          <div class="map-row-left">
+            <div class="mr-dot"></div>
+            <div>
+              <div class="mr-lbl">Map played</div>
+              <div class="mr-name">Classic Grass Field</div>
+            </div>
+          </div>
+          <div class="mr-diff" id="diffDots"></div>
+        </div>
+
+        <div class="btn-group">
+          <button class="gbtn gbtn-primary">
+            <svg width="14" height="14" viewBox="0 0 14 14">
+              <polygon points="2,1.5 13,7 2,12.5" fill="#450a0a"/>
+            </svg>
+            Play Again
+          </button>
+          <button class="gbtn gbtn-secondary">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="1" width="5" height="5" rx="1"/>
+              <rect x="8" y="1" width="5" height="5" rx="1"/>
+              <rect x="1" y="8" width="5" height="5" rx="1"/>
+              <rect x="8" y="8" width="5" height="5" rx="1"/>
+            </svg>
+            Choose Another Map
+          </button>
+          <div class="divider"></div>
+          <button class="gbtn gbtn-ghost">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round">
+              <path d="M8 2L3 6.5 8 11"/>
+            </svg>
+            Back to Main Menu
+          </button>
+        </div>
+
+        <div class="motivate" id="motivateMsg"></div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gc');
+const ctx    = canvas.getContext('2d');
+const COLS=22, ROWS=16, CELL=26;
+canvas.width=COLS*CELL; canvas.height=ROWS*CELL;
+
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
+
+function drawBoard(){
+  ctx.fillStyle='#111f14'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    ctx.fillStyle=(r+c)%2===0?'#132716':'#162d19';
+    ctx.fillRect(c*CELL,r*CELL,CELL,CELL);
+  }
+  for(let c=0;c<COLS;c++){wall(c,0);wall(c,ROWS-1);}
+  for(let r=1;r<ROWS-1;r++){wall(0,r);wall(COLS-1,r);}
+}
+
+function wall(x,y){
+  ctx.fillStyle='#1e4024'; ctx.fillRect(x*CELL,y*CELL,CELL,CELL);
+  ctx.strokeStyle='#2d5a33'; ctx.lineWidth=1;
+  ctx.strokeRect(x*CELL+.5,y*CELL+.5,CELL-1,CELL-1);
+  ctx.fillStyle='rgba(255,255,255,.025)';
+  ctx.fillRect(x*CELL+2,y*CELL+2,CELL-4,CELL/2-2);
+}
+
+const snake=[
+  {x:11,y:10},{x:11,y:9},{x:11,y:8},{x:10,y:8},{x:9,y:8},
+  {x:9,y:9},{x:9,y:10},{x:10,y:10},{x:11,y:10},
+  {x:12,y:10},{x:13,y:10},{x:14,y:10},{x:15,y:10},
+  {x:15,y:9},{x:15,y:8},{x:14,y:8}
+];
+
+function drawSnake(){
+  snake.forEach((seg,i)=>{
+    const isH=i===0,isT=i===snake.length-1;
+    ctx.fillStyle=isH?'rgba(248,113,113,.7)':isT?'rgba(220,38,38,.35)':'rgba(239,68,68,.5)';
+    const pad=isH?1:isT?3:2,r2=isH?6:isT?3:4;
+    rr(seg.x*CELL+pad,seg.y*CELL+pad,CELL-pad*2,CELL-pad*2,r2);
+    ctx.fill();
+    if(isH){
+      ctx.fillStyle='rgba(0,0,0,.6)';
+      [[10,10],[17,10]].forEach(([ex,ey])=>{
+        ctx.beginPath();ctx.arc(seg.x*CELL+ex,seg.y*CELL+ey,3,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,.18)';
+        ctx.beginPath();ctx.arc(seg.x*CELL+ex-1,seg.y*CELL+ey-1,1.2,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='rgba(0,0,0,.6)';
+      });
+      ctx.strokeStyle='rgba(248,113,113,.9)';
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(seg.x*CELL+9,seg.y*CELL+17);
+      ctx.lineTo(seg.x*CELL+14,seg.y*CELL+17);
+      ctx.stroke();
+    }
+  });
+
+  ctx.globalAlpha=0.15;
+  ctx.fillStyle='#f87171';
+  ctx.beginPath();
+  ctx.arc(snake[0].x*CELL+CELL/2,snake[0].y*CELL+CELL/2,CELL*1.4,0,Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha=1;
+}
+
+function drawFood(){
+  const fx=7*CELL+CELL/2, fy=5*CELL+CELL/2;
+  ctx.fillStyle='rgba(248,113,113,.25)';
+  ctx.beginPath();ctx.arc(fx,fy,CELL/2-3,0,Math.PI*2);ctx.fill();
+}
+
+drawBoard(); drawFood(); drawSnake();
+
+const FINAL = 3120;
+const el = document.getElementById('finalScore');
+let count=0;
+const step=Math.ceil(FINAL/60);
+const timer=setInterval(()=>{
+  count=Math.min(count+step,FINAL);
+  el.textContent=count.toLocaleString();
+  if(count>=FINAL) clearInterval(timer);
+},16);
+
+const dots=document.getElementById('diffDots');
+for(let i=1;i<=5;i++){
+  const d=document.createElement('div');
+  d.className='mr-dot2';
+  d.style.background=i<=1?'#4ade80':'rgba(255,255,255,.12)';
+  dots.appendChild(d);
+}
+
+const msgs=[
+  'You matched your personal best!',
+  'New record — <span>well played.</span>',
+];
+document.getElementById('motivateMsg').innerHTML='New record on this map — <span>well played.</span>';
+</script>
