@@ -12,7 +12,7 @@ body {
 #app {
   position: relative;
   width: 100%;
-  max-width: 680px;
+  max-width: 1024px;
   height: auto;
   min-height: 600px;
   background-color: #0c1219;
@@ -23,12 +23,12 @@ body {
 }
 
 .screen {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  position: relative;
+  width: 100%;
   display: none;
   flex-direction: column;
   background: #111827;
+  flex: 1;
 }
 
 .screen.active {
@@ -195,6 +195,7 @@ body {
 #game-canvas {
   border-radius: 10px; display: block; border: 1.5px solid rgba(255,255,255,.07);
   background-color: transparent;
+  max-width: 100%; height: auto;
 }
 .bottombar { display: flex; align-items: center; justify-content: space-between; padding: 6px 18px 14px; gap: 8px; }
 .hint { font-size: 11px; color: #374151; display: flex; align-items: center; gap: 5px; }

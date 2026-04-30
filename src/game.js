@@ -1,4 +1,5 @@
-const GRID_SIZE = 20;
+const GRID_COLS = 30;
+const GRID_ROWS = 20;
 
 export class Game {
   constructor(mapConfig, onGameOver, onScoreChange) {
@@ -63,7 +64,7 @@ export class Game {
 
   checkCollision(pos) {
     // Wall collision
-    if (pos.x < 0 || pos.x >= GRID_SIZE || pos.y < 0 || pos.y >= GRID_SIZE) {
+    if (pos.x < 0 || pos.x >= GRID_COLS || pos.y < 0 || pos.y >= GRID_ROWS) {
       return true;
     }
     // Obstacle collision
@@ -86,8 +87,8 @@ export class Game {
     let attempts = 0;
     while (attempts < 200) {
       newFood = {
-        x: Math.floor(Math.random() * GRID_SIZE),
-        y: Math.floor(Math.random() * GRID_SIZE)
+        x: Math.floor(Math.random() * GRID_COLS),
+        y: Math.floor(Math.random() * GRID_ROWS)
       };
 
       let valid = true;
@@ -109,16 +110,16 @@ export class Game {
   }
 
   draw(ctx, canvasWidth, canvasHeight) {
-    const cellWidth = canvasWidth / GRID_SIZE;
-    const cellHeight = canvasHeight / GRID_SIZE;
+    const cellWidth = canvasWidth / GRID_COLS;
+    const cellHeight = canvasHeight / GRID_ROWS;
 
     // Draw background
     ctx.fillStyle = this.map.bg;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
     // Draw checkerboard
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
+    for (let r = 0; r < GRID_ROWS; r++) {
+      for (let c = 0; c < GRID_COLS; c++) {
         if ((r + c) % 2 === 0) {
           ctx.fillStyle = this.map.cellA;
         } else {

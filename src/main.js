@@ -58,10 +58,8 @@ function startGame(mapId) {
   const mapConfig = maps[mapId];
   
   // Size the game canvas properly before starting
-  const GRID_SIZE = 20;
-  const CELL_SIZE = 26; // match prototype aesthetic
-  canvas.width = GRID_SIZE * CELL_SIZE;
-  canvas.height = GRID_SIZE * CELL_SIZE;
+  canvas.width = 960;
+  canvas.height = 640;
   
   game = new Game(mapConfig, handleGameOver, handleScoreChange);
   
@@ -173,6 +171,11 @@ function setupEventListeners() {
   });
 
   window.addEventListener('keydown', (e) => {
+    // Prevent default scrolling behavior for arrow keys
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+      e.preventDefault();
+    }
+
     if (!game || game.isGameOver) return;
 
     if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
