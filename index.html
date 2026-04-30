@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snake Game MVP</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Main Menu -->
+      <div id="main-menu" class="screen active">
+        <h1>Snake Game</h1>
+        <button id="btn-start">Start Game</button>
+      </div>
+
+      <!-- Map Selection -->
+      <div id="map-selection" class="screen">
+        <h2>Select Map</h2>
+        <div id="maps-list"></div>
+        <button id="btn-back-to-menu">Back</button>
+      </div>
+
+      <!-- Gameplay -->
+      <div id="gameplay" class="screen">
+        <div class="header">
+          <span id="current-map-name">Map Name</span>
+          <span id="current-score">Score: 0</span>
+        </div>
+        <!-- 20x20 grid -> let's say 400x400px so each cell is 20x20px -->
+        <canvas id="game-canvas" width="400" height="400"></canvas>
+      </div>
+
+      <!-- Pause Screen -->
+      <div id="pause-screen" class="screen overlay">
+        <h2>Paused</h2>
+        <button id="btn-resume">Resume</button>
+        <button id="btn-quit-paused">Quit to Menu</button>
+      </div>
+
+      <!-- Game Over -->
+      <div id="game-over" class="screen overlay">
+        <h2>Game Over!</h2>
+        <p id="final-score">Score: 0</p>
+        <button id="btn-play-again">Play Again</button>
+        <button id="btn-quit-gameover">Quit to Menu</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
